@@ -2,15 +2,15 @@ const pool = require("./db");
 const express = require("express");
 
 const app = express();
-const PORT = 3001;
-
-app.use(express.json());
+const PORT = process.env.PORT || 3001;
 
 const startApp = () => {
   app.listen(PORT, () => {
     console.log(`App is running on port ${PORT}... Press Ctrl + C to stop.`);
   });
 };
+
+app.use(express.json());
 
 startApp();
 
