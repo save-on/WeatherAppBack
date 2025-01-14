@@ -1,5 +1,7 @@
 const pool = require("./db");
 const express = require("express");
+const mainRouter = require("./routes/index");
+const errorHandler = require("./middlewares/error-handler");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -10,9 +12,12 @@ const startApp = () => {
   });
 };
 
+startApp(); // Could be fixed later
+
 app.use(express.json());
 
-startApp();
+app.use("/", mainRouter);
+app.use(errorHandler);
 
 const shutdownHandler = async () => {
   console.log("Closing database connection pool...");
