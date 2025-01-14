@@ -23,7 +23,7 @@ const createUser = async (req, res, next) => {
   }
 };
 
-const signin = async (req, res, next) => {
+const signInUser = async (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return next(
@@ -102,4 +102,4 @@ const updateCurrentUser = async (req, res, next) => {
   }
 };
 
-module.exports = { createUser, signin, getCurrentUser, updateCurrentUser };
+module.exports = { createUser, signInUser, getCurrentUser, updateCurrentUser };
