@@ -2,6 +2,7 @@ const pool = require("./db");
 const express = require("express");
 const mainRouter = require("./routes/index");
 const errorHandler = require("./middlewares/error-handler");
+const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -14,6 +15,7 @@ const startApp = () => {
 
 startApp(); // Could be fixed later
 
+app.use(cors());
 app.use(express.json());
 
 app.use("/", mainRouter);
