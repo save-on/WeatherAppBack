@@ -14,18 +14,25 @@ const getClothingItems = async (req, res, next) => {
 };
 
 const createClothingItem = async (req, res, next) => {
-  const { name, weather, affiliateLink, imagePath } = req.body;
+  const { name, weather_condition, affiliateLink, imagePath } = req.body;
   const { _id } = req.user;
   try {
     const [result] = await pool.query(
       "INSERT INTO clothing_items (name, weather_condition, owner, affiliate_link, isLiked, clothingimage_filepath) VALUES (?, ?, ?, ?, ?, ?)",
-      [name, weather, _id, affiliateLink || null, false, imagePath || null]
+      [
+        name,
+        weather_condition,
+        _id,
+        affiliateLink || null,
+        false,
+        imagePath || null,
+      ]
     );
-
     return res.status(created).send({
       name,
-      weather,
+      weather_condition,
       affiliateLink,
+      imagePath,
       isLiked: false,
       owner: _id,
       item_id: result.insertId,

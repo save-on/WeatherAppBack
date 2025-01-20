@@ -96,7 +96,11 @@ const updateCurrentUser = async (req, res, next) => {
         )
       );
     }
-    return res.status(200).send({ message: "user updated!" });
+    return res.status(200).send({
+      _id,
+      name,
+      avatar,
+    });
   } catch (err) {
     return next(err);
   }
