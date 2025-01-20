@@ -14,7 +14,8 @@ const getClothingItems = async (req, res, next) => {
 };
 
 const createClothingItem = async (req, res, next) => {
-  const { name, weather_condition, affiliateLink, imagePath } = req.body;
+  const { name, weather_condition, affiliateLink, clothingimage_filepath } =
+    req.body;
   const { _id } = req.user;
   try {
     const [result] = await pool.query(
@@ -25,14 +26,14 @@ const createClothingItem = async (req, res, next) => {
         _id,
         affiliateLink || null,
         false,
-        imagePath || null,
+        clothingimage_filepath || null,
       ]
     );
     return res.status(created).send({
       name,
       weather_condition,
       affiliateLink,
-      imagePath,
+      clothingimage_filepath,
       isLiked: false,
       owner: _id,
       item_id: result.insertId,
