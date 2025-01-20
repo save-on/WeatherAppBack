@@ -63,7 +63,7 @@ const deleteClothingItem = async (req, res, next) => {
         new NotFoundError("The request resource could not be found.")
       );
     }
-    return res.status(204).send();
+    return res.status(200).send({ message: "Deletion successful" });
   } catch (err) {
     next(err);
   }
