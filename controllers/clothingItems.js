@@ -36,7 +36,7 @@ const createClothingItem = async (req, res, next) => {
       clothingimage_filepath,
       isLiked: false,
       owner: _id,
-      item_id: result.insertId,
+      id: result.insertId,
     });
   } catch (err) {
     return next(err);
