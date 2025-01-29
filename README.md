@@ -20,5 +20,10 @@ We recently switched to postgresql
 - `DB_NAME="weatherapp"`
 - `DB_PORT=5432`
 - `JWT_TOKEN="Random numbers"` give this to chatgpt for it to generate you a new one (`e84f3a7b9d4c291e4a81c74f5b6c2f90`)
+## In terminal
+1. npm install (to install the dependencies)
+2. npm run dev for the backend
+## Optional Scripts
+- npm run lint to run the eslint linter to search for errors
 
 ### Any Questions send me a message on slack
