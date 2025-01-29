@@ -6,8 +6,8 @@ const NotFoundError = require("../utils/errorclasses/NotFoundError");
 
 const getClothingItems = async (req, res, next) => {
   try {
-    const [rows] = await pool.query("SELECT * FROM clothing_items");
-    return res.send(rows);
+    const result = await pool.query("SELECT * FROM clothing_items");
+    return res.send(result.rows);
   } catch (err) {
     return next(err);
   }
