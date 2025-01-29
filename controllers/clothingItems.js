@@ -2,7 +2,7 @@ const pool = require("../db");
 const { created } = require("../utils/constants");
 
 const BadRequestError = require("../utils/errorclasses/BadRequestError");
-const NotFoundError = require("../utils/errorclasses/NotFoundError");
+const UnauthorizedError = require("../utils/errorclasses/UnauthorizedError");
 
 const getClothingItems = async (req, res, next) => {
   try {
@@ -14,30 +14,22 @@ const getClothingItems = async (req, res, next) => {
 };
 
 const createClothingItem = async (req, res, next) => {
-  const { name, weather_condition, affiliateLink, clothingimage_filepath } =
-    req.body;
+  const { name, weather_condition, affiliate_link, clothing_image } = req.body;
   const { _id } = req.user;
   try {
-    const [result] = await pool.query(
-      "INSERT INTO clothing_items (name, weather_condition, owner, affiliate_link, isLiked, clothingimage_filepath) VALUES (?, ?, ?, ?, ?, ?)",
-      [
-        name,
-        weather_condition,
-        _id,
-        affiliateLink || null,
-        false,
-        clothingimage_filepath || null,
-      ]
+    const result = await pool.query(
+      `INSERT INTO clothing_items (
+      name, 
+      weather_condition, 
+      owner, 
+      affiliate_link, 
+      clothing_image
+      ) 
+      VALUES ($1, $2, $3, $4, $5) 
+      RETURNING *;`,
+      [name, weather_condition, _id, affiliate_link || null, clothing_image]
     );
-    return res.status(created).send({
-      name,
-      weather_condition,
-      affiliateLink,
-      clothingimage_filepath,
-      isLiked: false,
-      owner: _id,
-      item_id: result.insertId,
-    });
+    return res.status(created).send(result.rows[0]);
   } catch (err) {
     return next(err);
   }
@@ -54,13 +46,24 @@ const deleteClothingItem = async (req, res, next) => {
     );
   }
   try {
-    const [result] = await pool.query(
-      "DELETE FROM clothing_items WHERE id = ? AND owner = ?",
+    const result = await pool.query(
+      `WITH deleted_item AS (
+        SELECT id, owner
+        FROM clothing_items
+        WHERE id = $1
+      )
+      DELETE FROM clothing_items
+      USING deleted_item
+      WHERE clothing_items.id = deleted_item.id
+      AND deleted_item.owner = $2
+      RETURNING deleted_item.id, deleted_item.owner;`,
       [itemId, _id]
     );
-    if (result.affectedRows === 0) {
+    if (result.rowCount === 0) {
       return next(
-        new NotFoundError("The request resource could not be found.")
+        new UnauthorizedError(
+          "You are not authorized to delete this item, or it doesn't exist."
+        )
       );
     }
     return res.status(200).send({ message: "Deletion successful" });

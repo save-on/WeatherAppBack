@@ -14,8 +14,15 @@ const createUser = async (req, res, next) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     await pool.query(
-      "INSERT INTO users (name, email, image_filepath, password, location, allow_location) VALUES (?, ?, ?, ?, ?, ?)",
-      [name, email, avatar || null, hashedPassword, location || null, false]
+      `INSERT INTO users (
+      name, 
+      email, 
+      image_filepath, 
+      password, 
+      location
+      ) 
+      VALUES ($1, $2, $3, $4, $5);`,
+      [name, email, avatar || null, hashedPassword, location || null]
     );
     return res.status(created).send({ message: "Account creation successful" });
   } catch (err) {
@@ -59,11 +66,10 @@ const signInUser = async (req, res, next) => {
 const getCurrentUser = async (req, res, next) => {
   const { _id } = req.user;
   try {
-    const [result] = await pool.query("SELECT * FROM users WHERE id = ?", [
+    const result = await pool.query(`SELECT * FROM users WHERE id = $1;`, [
       _id,
     ]);
-    console.log(result);
-    const { id, name, image_filepath, location } = result[0];
+    const { id, name, image_filepath, location } = result.rows[0];
     return res.send({
       _id: id,
       name,
@@ -85,11 +91,11 @@ const updateCurrentUser = async (req, res, next) => {
     );
   }
   try {
-    const [result] = await pool.query(
-      "UPDATE users SET name = ?, image_filepath = ? WHERE id = ?",
+    const result = await pool.query(
+      `UPDATE users SET name = $1, image_filepath = $2 WHERE id = $3 RETURNING *;`,
       [name, avatar, _id]
     );
-    if (result.affectedRows === 0) {
+    if (result.rowCount === 0) {
       return next(
         new NotFoundError(
           "The user you attempted to update could not be found."
