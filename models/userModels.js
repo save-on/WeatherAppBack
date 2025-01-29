@@ -16,7 +16,7 @@ const findUserByCredentials = async ({ email, password }) => {
     }
     return rows[0];
   } catch (err) {
-    throw err;
+    console.error(err);
   }
 };
 
