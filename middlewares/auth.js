@@ -27,6 +27,7 @@ const auth = (req, res, next) => {
     payload = jwt.verify(token, jwtToken);
     req.user = payload;
   } catch (error) {
+    console.error(error);
     return handleAuthError(res);
   }
   return next();
