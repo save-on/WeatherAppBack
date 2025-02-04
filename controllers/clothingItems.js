@@ -6,7 +6,9 @@ const UnauthorizedError = require("../utils/errorclasses/UnauthorizedError");
 
 const getClothingItems = async (req, res, next) => {
   try {
-    const result = await pool.query("SELECT * FROM clothing_items");
+    const result = await pool.query(
+      "SELECT * FROM clothing_items ORDER BY created_at DESC;"
+    );
     return res.send(result.rows);
   } catch (err) {
     return next(err);
