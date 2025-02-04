@@ -1,7 +1,8 @@
-// const router = require("express").Router();
-// const { likeItem, dislikeItem } = require("../controllers/likes");
+const router = require("express").Router();
+const { likeItem, dislikeItem } = require("../controllers/likes");
+const auth = require("../middlewares/auth");
 
-// router.put("/:itemId/likes", likeItem);
-// router.delete("/:itemId/likes", dislikeItem);
+router.put("/:itemId/likes", auth, likeItem);
+router.delete("/:itemId/likes", auth, dislikeItem);
 
-// module.exports = router;
+module.exports = router;
