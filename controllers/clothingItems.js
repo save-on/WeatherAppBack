@@ -22,12 +22,13 @@ const createClothingItem = async (req, res, next) => {
       name, 
       weather_condition, 
       owner, 
-      affiliate_link, 
+      affiliate_link,
+      likes,
       clothing_image
       ) 
-      VALUES ($1, $2, $3, $4, $5) 
+      VALUES ($1, $2, $3, $4, $5, $6) 
       RETURNING *;`,
-      [name, weather_condition, _id, affiliate_link || null, clothing_image]
+      [name, weather_condition, _id, affiliate_link || null, [], clothing_image]
     );
     return res.status(created).send(result.rows[0]);
   } catch (err) {
