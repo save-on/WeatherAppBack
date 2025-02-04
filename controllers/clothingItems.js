@@ -6,7 +6,9 @@ const UnauthorizedError = require("../utils/errorclasses/UnauthorizedError");
 
 const getClothingItems = async (req, res, next) => {
   try {
-    const result = await pool.query("SELECT * FROM clothing_items");
+    const result = await pool.query(
+      "SELECT * FROM clothing_items ORDER BY created_at DESC;"
+    );
     return res.send(result.rows);
   } catch (err) {
     return next(err);
@@ -22,12 +24,13 @@ const createClothingItem = async (req, res, next) => {
       name, 
       weather_condition, 
       owner, 
-      affiliate_link, 
+      affiliate_link,
+      likes,
       clothing_image
       ) 
-      VALUES ($1, $2, $3, $4, $5) 
+      VALUES ($1, $2, $3, $4, $5, $6) 
       RETURNING *;`,
-      [name, weather_condition, _id, affiliate_link || null, clothing_image]
+      [name, weather_condition, _id, affiliate_link || null, [], clothing_image]
     );
     return res.status(created).send(result.rows[0]);
   } catch (err) {
