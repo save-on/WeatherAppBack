@@ -36,6 +36,6 @@ We recently switched to postgresql
 `POST................createUser................../user/signup`\
 `POST................signInUser................../user/signin`\
 `PUT.................likeItem..................../clothing-items/:itemId/likes`\
-`DELETE..............dislikeItem................./clothing-items/:itemId/likes`\
+`DELETE..............dislikeItem................./clothing-items/:itemId/likes`
 
 ### Any Questions send me a message on slack
