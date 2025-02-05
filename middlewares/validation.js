@@ -81,9 +81,9 @@ module.exports.validateUserCredentials = celebrate({
 
 module.exports.validateItemId = celebrate({
   params: Joi.object().keys({
-    itemId: Joi.string().hex().length(24).messages({
-      "string.hex": 'The "itemId" field must be a hexadecimal',
-      "string.length": 'The "itemId" field must be 24 characters',
+    itemId: Joi.number().required().messages({
+      "string.empty": 'The "itemId" field is required',
+      "string.number": 'The "itemId" field is must be an integer',
     }),
   }),
 });
