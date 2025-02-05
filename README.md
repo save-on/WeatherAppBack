@@ -26,4 +26,16 @@ We recently switched to postgresql
 ## Optional Scripts
 - npm run lint to run the eslint linter to search for errors
 
+### Backend endpoints
+`RequestType        Function                    Path
+GET.................GetClothingItems............/clothing-items -
+POST................CreateClothingItem........../clothing-items 
+DELETE..............deleteClothingItem........../clothing-items/:itemId 
+GET.................getCurrentUser............../user/me -
+PATCH...............updateCurrentUser.........../user/me -
+POST................createUser................../user/signup -
+POST................signInUser................../user/signin -
+PUT.................likeItem..................../clothing-items/:itemId/likes
+DELETE..............dislikeItem................./clothing-items/:itemId/likes`
+
 ### Any Questions send me a message on slack
