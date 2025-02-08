@@ -22,7 +22,7 @@ module.exports.validateCardBody = celebrate({
         "any.required": 'A "weather" field selection is required',
         "any.only": 'Please select a valid "weather" field selection',
       }),
-    affiliate_link: Joi.string().custom(validateURL).messages({
+    affiliate_link: Joi.string().optional().custom(validateURL).messages({
       "string.uri": 'The "affiliate link" field must be a valid URL',
     }),
     clothing_image: Joi.string().required().custom(validateURL).messages({
@@ -39,10 +39,7 @@ module.exports.validateUserBody = celebrate({
       "string.max": 'The maximum length of the "name" field is 30',
       "string.empty": 'The "name" field must be filled in',
     }),
-    avatar: Joi.string().required().custom(validateURL).messages({
-      "string.empty": 'The "avatar" field must be filled in',
-      "string.uri": 'The "avatar" field must be a valid URL',
-    }),
+    avatar: Joi.string().optional().empty("").custom(validateURL),
     email: Joi.string().required().email().messages({
       "string.empty": 'The "email" field must be filled in',
       "string.email": 'The "email" field must be a valid email',
@@ -60,10 +57,7 @@ module.exports.validateUserUpdate = celebrate({
       "string.max": 'The maximum length of the "name" field is 30',
       "string.empty": 'The "name" field must be filled in',
     }),
-    avatar: Joi.string().required().custom(validateURL).messages({
-      "string.empty": 'The "avatar" field must be filled in',
-      "string.uri": 'The "avatar" field must be a valid URL',
-    }),
+    avatar: Joi.string().optional().empty("").custom(validateURL),
   }),
 });
 
