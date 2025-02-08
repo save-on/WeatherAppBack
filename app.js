@@ -3,6 +3,7 @@ const express = require("express");
 const mainRouter = require("./routes/index");
 const errorHandler = require("./middlewares/error-handler");
 const cors = require("cors");
+const { errors } = require("celebrate");
 require("dotenv").config();
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/", mainRouter);
+app.use(errors());
 app.use(errorHandler);
 
 const shutdownHandler = async () => {
