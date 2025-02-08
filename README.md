@@ -26,16 +26,19 @@ We recently switched to postgresql
 ## Optional Scripts
 - npm run lint to run the eslint linter to search for errors
 
-### Backend endpoints
-`RequestType         Function                    Path`\
-`GET.................GetClothingItems............/clothing-items`\
-`POST................CreateClothingItem........../clothing-items`\
-`DELETE..............deleteClothingItem........../clothing-items/:itemId`\
-`GET.................getCurrentUser............../user/me`\
-`PATCH...............updateCurrentUser.........../user/me`\
-`POST................createUser................../user/signup`\
-`POST................signInUser................../user/signin`\
-`PUT.................likeItem..................../clothing-items/:itemId/likes`\
-`DELETE..............dislikeItem................./clothing-items/:itemId/likes`
+## API Endpoints Overview
+
+| **Endpoint**                  | **Method** | **Description**            |
+| ----------------------------- | ---------- | -------------------------- |
+| /user/signup                  | POST       | Register a new user        |
+| /user/signin                  | POST       | Log in a user              |
+| /users/me                     | GET        | Get current user profile   |
+| /users/me                     | PATCH      | Update Current User        |
+| /clothing-items               | GET        | Fetch clothing items       |
+| /clothing-items               | POST       | Create a new clothing card |
+| /clothing-items/:itemId       | DELETE     | Delete a clothing card     |
+| /clothing-items/:itemId/likes | DELETE     | Dislike a clothing item    |
+| /clothing-items/:itemId/likes | PUT        | Like a clothing item       |
+
 
 ### Any Questions send me a message on slack
