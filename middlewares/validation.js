@@ -39,7 +39,7 @@ module.exports.validateUserBody = celebrate({
       "string.max": 'The maximum length of the "name" field is 30',
       "string.empty": 'The "name" field must be filled in',
     }),
-    avatar: Joi.string().custom(validateURL).messages({
+    avatar: Joi.string().optional().custom(validateURL).messages({
       "string.uri": 'The "avatar" field must be a valid URL',
     }),
     email: Joi.string().required().email().messages({
@@ -59,7 +59,7 @@ module.exports.validateUserUpdate = celebrate({
       "string.max": 'The maximum length of the "name" field is 30',
       "string.empty": 'The "name" field must be filled in',
     }),
-    avatar: Joi.string().custom(validateURL).messages({
+    avatar: Joi.string().optional().custom(validateURL).messages({
       "string.uri": 'The "avatar" field must be a valid URL',
     }),
   }),
