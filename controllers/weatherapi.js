@@ -20,6 +20,7 @@ const searchWeather = async (req, res) => {
     }
     res.status(response.status).json({ error: data.message });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Weather data failed to fetch" });
   }
 };
