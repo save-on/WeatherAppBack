@@ -3,11 +3,12 @@ const clothingItemRouter = require("./clothingItems");
 // const packingListsRouter = require("./packingLists");
 const userRouter = require("./users");
 const likeRouter = require("./likes");
+const weatherApi = require("./weatherapi");
 const NotFoundError = require("../utils/errorclasses/NotFoundError");
 
 router.use("/clothing-items", clothingItemRouter);
 router.use("/clothing-items", likeRouter);
-// router.use("/profile/packing-lists", packingListsRouter);
+router.use("/weather", weatherApi);
 router.use("/users", userRouter);
 
 // Defensive code
