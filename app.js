@@ -23,6 +23,7 @@ app.use(express.json());
 app.use("/", mainRouter);
 app.use(errors());
 app.use(errorHandler);
+app.use("/uploads", express.static("uploads"));
 
 const shutdownHandler = async () => {
   console.log("Closing database connection pool...");

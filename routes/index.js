@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const clothingItemRouter = require("./clothingItems");
+// const packingListsRouter = require("./packingLists");
 const userRouter = require("./users");
 const likeRouter = require("./likes");
 const weatherApi = require("./weatherapi");
