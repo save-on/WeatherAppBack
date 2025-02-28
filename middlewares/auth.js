@@ -11,6 +11,7 @@ const handleAuthError = (res) => {
 
 const extractBearerToken = (authorization) =>
   authorization.replace("Bearer ", "");
+  
 
 const auth = (req, res, next) => {
   const { authorization } = req.headers;

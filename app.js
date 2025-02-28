@@ -3,6 +3,7 @@ const express = require("express");
 const mainRouter = require("./routes/index");
 const errorHandler = require("./middlewares/error-handler");
 const cors = require("cors");
+const multer = require("multer");
 const { errors } = require("celebrate");
 require("dotenv").config();
 
@@ -19,6 +20,7 @@ startApp(); // Could be fixed later
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/", mainRouter);
 app.use(errors());

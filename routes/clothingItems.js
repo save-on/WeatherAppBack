@@ -13,12 +13,9 @@ const {
 } = require("../middlewares/validation");
 
 router.get("/", getClothingItems);
-router.post("/", auth,upload.single("cloting_image"), validateCardBody, createClothingItem);
-router.post("/", upload.single("clothing_image"), (req, res) => {
-  console.log("Body:", req.body);
-  console.log("File:", req.file);
-  res.send({ message: "File received!" });
-});
+// router.post("/", auth,upload.single("cloting_image"), validateCardBody, createClothingItem);
+
 router.delete("/:itemId", auth, validateItemId, deleteClothingItem);
+router.post("/", upload.single("clothing_image"), createClothingItem);
 
 module.exports = router;

@@ -16,7 +16,7 @@ const getPackingLists = async(req, res, next) => {
 } ;
 
 const createPackingList = async (req, res, next) => {
-    const { name, weather_condition, affiliate_link, clothing_image } = req.body;
+    const { name, weather_condition, clothing_image } = req.body;
     const { _id } = req.user;
     try {
         const result = await pool.query(

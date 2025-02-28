@@ -29,7 +29,7 @@ CREATE TABLE clothing_item_likes (
 );
 
 CREATE TABLE packing_lists (
-	packing_list_id SERIAL PRIMARY KEY,
+	id SERIAL PRIMARY KEY,
 	name VARCHAR(50) NOT NULL,
 	weather_condition weather NOT NULL,
 	owner INT REFERENCES users(id) ON DELETE CASCADE,
