@@ -15,24 +15,60 @@ const getClothingItems = async (req, res, next) => {
   }
 };
 
+// const createClothingItem = async (req, res, next) => {
+//   const { name, weather_condition, affiliate_link, clothing_image } = req.body;
+//   const { _id } = req.user;
+//   try {
+//     const result = await pool.query(
+//       `INSERT INTO clothing_items (
+//       name, 
+//       weather_condition, 
+//       owner, 
+//       affiliate_link,
+//       likes,
+//       clothing_image
+//       ) 
+//       VALUES ($1, $2, $3, $4, $5, $6) 
+//       RETURNING *;`,
+//       [name, weather_condition, _id, affiliate_link || null, [], clothing_image]
+//     );
+//     return res.status(created).send(result.rows[0]);
+//   } catch (err) {
+//     return next(err);
+//   }
+// };
+
 const createClothingItem = async (req, res, next) => {
-  const { name, weather_condition, affiliate_link, clothing_image } = req.body;
-  const { _id } = req.user;
+  //Extract form fileds from req.body
+  const{ name, weeather_condition, affiliate_link } = req.body;
+  const { _id } = req.user; 
+  
+  //Handle the uploaded image file
+  let clothing_image;
+  if (req.file) {
+    clothing_image = `/uploads/${req.file.filename}`; //Image path for storage
+  } else {
+    return res.status(400).json({ message: "Image file is required!"});
+  }
+
   try {
+    //Insert into the database
     const result = await pool.query(
       `INSERT INTO clothing_items (
       name, 
-      weather_condition, 
+      weather_condition,
       owner, 
       affiliate_link,
-      likes,
+      likes, 
       clothing_image
-      ) 
-      VALUES ($1, $2, $3, $4, $5, $6) 
+      )
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;`,
-      [name, weather_condition, _id, affiliate_link || null, [], clothing_image]
+      [name, weeather_condition, _id, affiliate_link || null, [], clothing_image]
     );
-    return res.status(created).send(result.rows[0]);
+
+    //Send a success response with thenew item data
+    return res.status(201).send(result.rows[0]);
   } catch (err) {
     return next(err);
   }
