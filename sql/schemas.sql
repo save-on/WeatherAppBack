@@ -34,5 +34,5 @@ CREATE TABLE packing_lists (
 	weather_condition weather NOT NULL,
 	owner INT REFERENCES users(id) ON DELETE CASCADE,
 	created_at TIMESTAMP DEFAULT current_timestamp,
-	image_filepath TEXT NOT NULL
+	clothing_image TEXT NOT NULL
 )
