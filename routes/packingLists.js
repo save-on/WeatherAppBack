@@ -9,8 +9,8 @@ const auth = require("../middlewares/auth");
 
 const validatePackingListId = require("../middlewares/validation")
 
-router.get("/profile/packing-lists", getPackingLists);
-router.post("/profile/packing-lists", auth, validatePackingListId, createPackingList);
+router.get("/", getPackingLists);
+router.post("/", createPackingList);
 
 
 module.exports = router;
