@@ -13,9 +13,7 @@ const {
 } = require("../middlewares/validation");
 
 router.get("/", getClothingItems);
-// router.post("/", auth,upload.single("cloting_image"), validateCardBody, createClothingItem);
-
 router.delete("/:itemId", auth, validateItemId, deleteClothingItem);
-router.post("/", upload.single("clothing_image"), createClothingItem);
+router.post("/", auth, upload.single("clothing_image"), validateCardBody, createClothingItem);
 
 module.exports = router;

@@ -30,6 +30,7 @@ const auth = (req, res, next) => {
 
   try {
     payload = jwt.verify(token, jwtToken);
+    console.log("Decoded Payload: ", payload)
     req.user = payload;
   } catch (error) {
     console.error(error);
