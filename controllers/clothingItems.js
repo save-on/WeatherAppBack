@@ -27,7 +27,7 @@ const createClothingItem = async (req, res, next) => {
   let file_image;
   if (clothing_image) {
     // file_image = `${baseUrl}/uploads/${clothing_image}`;
-    file_image = `/${clothing_image}`
+    file_image = `${baseUrl}/uploads/${clothing_image}`
   } else {
     return res.status(400).json({ message: "Image file is required!"});
   }
