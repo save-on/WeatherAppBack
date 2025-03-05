@@ -18,16 +18,16 @@ const getClothingItems = async (req, res, next) => {
 
 const createClothingItem = async (req, res, next) => {
   //Extract form fileds from req.body
-  const{ name, weather_condition, affiliate_link, clothing_image } = req.body;
+  const{ name, weather_condition, affiliate_link } = req.body;
   const { _id } = req.user; 
   console.log("req.user: ", req.user);
+  console.log("req.file:", req.file);
   
   
   //Handle the uploaded image file
-  let file_image;
-  if (clothing_image) {
-    // file_image = `${baseUrl}/uploads/${clothing_image}`;
-    file_image = `${baseUrl}/uploads/${clothing_image}`
+  let file_image_path; // Variable to store the image file path
+  if (req.file) {
+    file_image_path = `/uploads/${req.file.filename}`
   } else {
     return res.status(400).json({ message: "Image file is required!"});
   }
@@ -45,7 +45,7 @@ const createClothingItem = async (req, res, next) => {
       )
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;`,
-      [name, weather_condition, _id, affiliate_link || null, [], clothing_image]
+      [name, weather_condition, _id, affiliate_link || null, [], file_image_path]
     );
 
     //Send a success response with thenew item data

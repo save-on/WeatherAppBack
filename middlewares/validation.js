@@ -26,9 +26,9 @@ module.exports.validateCardBody = celebrate({
     // .messages({
     //   "string.uri": 'The "affiliate link" field must be a valid URL',
     // }),
-    clothing_image: Joi.string().required().messages({
-      "string.empty": 'The "clothing image" field must be filled in',
-    }),
+    // clothing_image: Joi.string().required().messages({
+    //   "string.empty": 'The "clothing image" field must be filled in',
+    // }),
   }),
 });
 
