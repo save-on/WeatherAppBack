@@ -1,4 +1,8 @@
 const pool = require("../db");
+const path = require("path");
+const crypto = require("crypto");
+const fs = require('node:fs/promises');
+const util = require('util');
 const { created } = require("../utils/constants");
 
 const BadRequestError = require("../utils/errorclasses/BadRequestError");
@@ -8,9 +12,8 @@ const getPackingLists = async (req, res, next) => {
   const owner_id = req.user._id; //Getting user id from auth middleware
   try {
     const result = await pool.query(
-      "SELECT * FROM packing_lists WHERE owner_id = $1 ORDER BY created_at DESC;"[
-        owner_id
-      ]
+      "SELECT * FROM packing_lists WHERE owner = $1 ORDER BY created_at DESC;",
+      [owner_id]
     );
     return res.send(result.rows);
   } catch (err) {
@@ -24,7 +27,7 @@ const getPackingListById = async (req, res, next) => {
   try {
     // Fetching packing list details
     const packingListResult = await pool.query(
-      "SELECT * FROM packing_lists WHERE id = $1 AND owner_id = $2",
+      "SELECT * FROM packing_lists WHERE id = $1 AND owner = $2",
       [packingListId, owner_id]
     );
     if (packingListResult.rows.length === 0) {
@@ -54,25 +57,36 @@ const getPackingListById = async (req, res, next) => {
 };
 
 const createPackingList = async (req, res, next) => {
-  const { name } = req.body;
-  const owner_id = req.user._id;
-  if (!name) {
-    return next(new BadRequestError("Packing list name is required."));
-  }
-  try {
-    const result = await pool.query(
-      `INSERT INTO packing_lists (
-            name,
-            owner_id,             
-            )
-            VALUES ($1, $2)
-            RETURNING *;`,
-      [name, owner_id]
-    );
-    return res.status(201).send(result.rows[0]);
-  } catch (err) {
-    return next(err);
-  }
+    const { name, weather_condition, location } = req.body;
+    const owner_id = req.user._id;
+    const imageFile = req.file;
+
+    if (!name) {
+        return next(new BadRequestError("Packing list name is required."));
+    }
+
+    let image_filepath;
+    if (imageFile) {
+        image_filepath = `/uploads/${req.file.filename}`; // Simplified file path, like clothing items
+        console.log("Simplified image_filepath: ", image_filepath); // Log the simplified path
+    }
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO packing_lists (
+                name,
+                owner,
+                image_filepath
+                )
+                VALUES ($1, $2, $3)
+                RETURNING *;`,
+            [name, owner_id, image_filepath]
+        );
+        return res.status(201).send(result.rows[0]);
+    } catch (dbError) {
+        console.error("Database error: ", dbError);
+        return next(dbError);
+    }
 };
 
 const updatePackingList = async (req, res, next) => {
@@ -86,7 +100,7 @@ const updatePackingList = async (req, res, next) => {
   }
   try {
     const result = await pool.query(
-      "UPDATE packing_lists SET name = $1, updated_at = now() WHERE id = $2 AND owner_id = $3 RETURNING *;",
+      "UPDATE packing_lists SET name = $1, updated_at = now() WHERE id = $2 AND owner = $3 RETURNING *;",
       [name, packingListId, owner_id]
     );
     if (result.rows.length === 0) {
@@ -105,7 +119,7 @@ const deletePackingList = async (req, res, next) => {
   const owner_id = req.user._id;
   try {
     const result = await pool.query(
-      "DELETE FROM packing_lists WHERE id = $1 AND owner_id = $2 RETURNING *;",
+      "DELETE FROM packing_lists WHERE id = $1 AND owner = $2 RETURNING *;",
       [packingListId, owner_id]
     );
     if (result.rows.length === 0) {

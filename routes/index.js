@@ -14,6 +14,6 @@ router.use("/users", userRouter);
 router.use("/profile/packing-lists", packingListRouter);
 router.use("/items", clothingItemRouter);
 router.use("/", userRouter);
-router.user("/profile/packing-lists", auth, packingListRouter);
+router.use("/profile/packing-lists", packingListRouter);
 
 module.exports = router;

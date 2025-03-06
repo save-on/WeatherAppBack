@@ -31,11 +31,11 @@ CREATE TABLE clothing_item_likes (
 CREATE TABLE packing_lists (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(255) NOT NULL,
-	owner_id INT NOT NULL REFERENCES users(id),
-	created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT,
-	updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT,
-	clothing_image TEXT NOT NULL,
-	weather_condition weather NOT NULL,
+	owner INT REFERENCES users(id) on DELETE CASCADE,
+	created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+	updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+	packingList_image TEXT NOT NULL,
+	weather_condition weather NULL,
 )
 
 CREATE TABLE packing_list_items (

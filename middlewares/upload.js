@@ -26,4 +26,6 @@ const upload = multer({
     limits: { fileSize: 100 * 1024 * 1024}
 });
 
+console.log("Multer middleware loaded!");
+
 module.exports = upload;
