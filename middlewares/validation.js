@@ -23,12 +23,6 @@ module.exports.validateCardBody = celebrate({
         "any.only": 'Please select a valid "weather" field selection',
       }),
     affiliate_link: Joi.string().optional().empty("").custom(validateURL),
-    // .messages({
-    //   "string.uri": 'The "affiliate link" field must be a valid URL',
-    // }),
-    // clothing_image: Joi.string().required().messages({
-    //   "string.empty": 'The "clothing image" field must be filled in',
-    // }),
   }),
 });
 
@@ -82,11 +76,21 @@ module.exports.validateItemId = celebrate({
   }),
 });
 
-// module.exports.validatePackingListId = celebrate({
-//   params: Joi.object().keys({
-//     packlistListId: Joi.number().required().messages({
-//       "string.empty": 'The "packingListId" field is required',
-//       "string number": 'The "packingListId" field must be an integer',
-//     }),
-//   }),
-// });
+module.exports.validatePackingListId = celebrate({
+  params: Joi.object().keys({
+    packingListId: Joi.number().required().messages({
+      "string.empty": 'The "packingListId" field is required',
+      "string.number": 'The "packingListId" field must be an integer', 
+    }),
+  }),
+});
+
+module.exports.validatePackingListItemId = celebrate({
+  params: Joi.object().keys({
+    itemId: Joi.number().required().messages({
+      // 'itemId' here refers to packing_list_items ID
+      "string.empty": 'The "packingListItemId" field is required',
+      "string.number": 'The "packingListItemId" field must be an integer', 
+    }),
+  }),
+});
