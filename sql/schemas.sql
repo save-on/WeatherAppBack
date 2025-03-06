@@ -30,9 +30,19 @@ CREATE TABLE clothing_item_likes (
 
 CREATE TABLE packing_lists (
 	id SERIAL PRIMARY KEY,
-	name VARCHAR(50) NOT NULL,
+	name VARCHAR(255) NOT NULL,
+	owner_id INT NOT NULL REFERENCES users(id),
+	created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT,
+	updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT,
+	clothing_image TEXT NOT NULL,
 	weather_condition weather NOT NULL,
-	owner INT REFERENCES users(id) ON DELETE CASCADE,
-	created_at TIMESTAMP DEFAULT current_timestamp,
-	clothing_image TEXT NOT NULL
 )
+
+CREATE TABLE packing_list_items (
+    id SERIAL PRIMARY KEY,
+    packing_list_id INTEGER NOT NULL REFERENCES packing_lists(id) ON DELETE CASCADE, 
+    clothing_item_id INTEGER NOT NULL REFERENCES clothing_items(id) ON DELETE CASCADE, 
+    quantity INT DEFAULT 1,
+    notes TEXT,
+    added_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);

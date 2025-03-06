@@ -12,12 +12,8 @@ router.use("/clothing-items", likeRouter);
 router.use("/weather", weatherApi);
 router.use("/users", userRouter);
 router.use("/profile/packing-lists", packingListRouter);
-
-
-
-// Defensive code
-// router.use(() => {
-//   throw new NotFoundError("The Requested resource was not found.");
-// });
+router.use("/items", clothingItemRouter);
+router.use("/", userRouter);
+router.user("/profile/packing-lists", auth, packingListRouter);
 
 module.exports = router;
