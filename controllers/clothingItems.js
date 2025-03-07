@@ -21,14 +21,14 @@ const getClothingItems = async (req, res, next) => {
 //   try {
 //     const result = await pool.query(
 //       `INSERT INTO clothing_items (
-//       name, 
-//       weather_condition, 
-//       owner, 
+//       name,
+//       weather_condition,
+//       owner,
 //       affiliate_link,
 //       likes,
 //       clothing_image
-//       ) 
-//       VALUES ($1, $2, $3, $4, $5, $6) 
+//       )
+//       VALUES ($1, $2, $3, $4, $5, $6)
 //       RETURNING *;`,
 //       [name, weather_condition, _id, affiliate_link || null, [], clothing_image]
 //     );
@@ -40,15 +40,15 @@ const getClothingItems = async (req, res, next) => {
 
 const createClothingItem = async (req, res, next) => {
   //Extract form fileds from req.body
-  const{ name, weeather_condition, affiliate_link } = req.body;
-  const { _id } = req.user; 
-  
+  const { name, weeather_condition, affiliate_link } = req.body;
+  const { _id } = req.user;
+
   //Handle the uploaded image file
   let clothing_image;
   if (req.file) {
     clothing_image = `/uploads/${req.file.filename}`; //Image path for storage
   } else {
-    return res.status(400).json({ message: "Image file is required!"});
+    return next(new BadRequestError("Image file is required!"));
   }
 
   try {
@@ -64,7 +64,14 @@ const createClothingItem = async (req, res, next) => {
       )
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;`,
-      [name, weeather_condition, _id, affiliate_link || null, [], clothing_image]
+      [
+        name,
+        weeather_condition,
+        _id,
+        affiliate_link || null,
+        [],
+        clothing_image,
+      ]
     );
 
     //Send a success response with thenew item data

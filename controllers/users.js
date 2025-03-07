@@ -26,6 +26,11 @@ const createUser = async (req, res, next) => {
     );
     return res.status(created).send({ message: "Account creation successful" });
   } catch (err) {
+    if (err.code === "23505") {
+      return next(
+        new BadRequestError("User email already exists, choose another one.")
+      );
+    }
     return next(err);
   }
 };
@@ -35,14 +40,14 @@ const signInUser = async (req, res, next) => {
   if (!email || !password) {
     return next(
       new BadRequestError(
-        "Invalid input data. The request could not be processed."
+        "Missing input field, email and password are required"
       )
     );
   }
   try {
     const user = await findUserByCredentials({ email, password });
     if (!user) {
-      return next(new UnauthorizedError("Unauthorized, invalid credentials"));
+      return next(new UnauthorizedError("Incorrect email or password"));
     }
     const { id, name, image_filepath, location } = user;
     const token = await jwt.sign({ _id: id }, process.env.JWT_TOKEN, {
@@ -57,7 +62,7 @@ const signInUser = async (req, res, next) => {
     });
   } catch (err) {
     if (err.message === "Incorrect email or password") {
-      return next(new UnauthorizedError("Unauthorized, invalid credentials."));
+      return next(new UnauthorizedError("Incorrect email or password."));
     }
     return next(err);
   }
