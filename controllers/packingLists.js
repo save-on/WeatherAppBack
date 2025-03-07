@@ -1,8 +1,8 @@
 const pool = require("../db");
 const path = require("path");
 const crypto = require("crypto");
-const fs = require('node:fs/promises');
-const util = require('util');
+const fs = require("node:fs/promises");
+const util = require("util");
 const { created } = require("../utils/constants");
 const db = require("../db");
 
@@ -24,10 +24,15 @@ const getPackingLists = async (req, res, next) => {
 
 const getItemsForPackingList = async (req, res, next) => {
   try {
-      const packingListId = req.params.packingListId;
-      console.log("getPackingListItems - packingListId: ", packingListId, ", type: ", typeof packingListId);
+    const packingListId = req.params.packingListId;
+    console.log(
+      "getPackingListItems - packingListId: ",
+      packingListId,
+      ", type: ",
+      typeof packingListId
+    );
 
-      const query = `
+    const query = `
       SELECT
       clothing_items.id AS clothing_item_id,
       clothing_items.name AS clothing_item_name,
@@ -42,16 +47,18 @@ const getItemsForPackingList = async (req, res, next) => {
       WHERE packing_list_items.packing_list_id = $1
       `;
 
-      const values = [packingListId];
-      const result = await db.query(query, values);
-      const items = result.rows;
+    const values = [packingListId];
+    const result = await db.query(query, values);
+    const items = result.rows;
 
-      if(!items || items.length === 0) {
-          return res.status(404).json({ message: "No items found for this packing list"});
-      }
-      res.status(200).json(items);
+    if (!items || items.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No items found for this packing list" });
+    }
+    res.status(200).json(items);
   } catch (err) {
-      next(err);
+    next(err);
   }
 };
 
@@ -91,36 +98,36 @@ const getPackingListById = async (req, res, next) => {
 };
 
 const createPackingList = async (req, res, next) => {
-    const { name, weather_condition, location } = req.body;
-    const owner_id = req.user._id;
-    const imageFile = req.file;
+  const { name, weather_condition, location } = req.body;
+  const owner_id = req.user._id;
+  const imageFile = req.file;
 
-    if (!name) {
-        return next(new BadRequestError("Packing list name is required."));
-    }
+  if (!name) {
+    return next(new BadRequestError("Packing list name is required."));
+  }
 
-    let packinglist_image;
-    if (imageFile) {
-        packinglist_image = `/uploads/${req.file.filename}`; // Simplified file path, like clothing items
-        console.log("Simplified packinglist_image: ", packinglist_image); // Log the simplified path
-    }
+  let packinglist_image;
+  if (imageFile) {
+    packinglist_image = `/uploads/${req.file.filename}`; // Simplified file path, like clothing items
+    console.log("Simplified packinglist_image: ", packinglist_image); // Log the simplified path
+  }
 
-    try {
-        const result = await pool.query(
-            `INSERT INTO packing_lists (
+  try {
+    const result = await pool.query(
+      `INSERT INTO packing_lists (
                 name,
                 owner,
                 packinglist_image
                 )
                 VALUES ($1, $2, $3)
                 RETURNING *;`,
-            [name, owner_id, packinglist_image]
-        );
-        return res.status(201).send(result.rows[0]);
-    } catch (dbError) {
-        console.error("Database error: ", dbError);
-        return next(dbError);
-    }
+      [name, owner_id, packinglist_image]
+    );
+    return res.status(201).send(result.rows[0]);
+  } catch (dbError) {
+    console.error("Database error: ", dbError);
+    return next(dbError);
+  }
 };
 
 const updatePackingList = async (req, res, next) => {
@@ -171,20 +178,31 @@ const deletePackingList = async (req, res, next) => {
 
 const addItemToPackingList = async (req, res, next) => {
   const { packingListId } = req.params;
-  const { clothing_item_id } = req.body;
-  if (!clothing_item_id) {
+  const { clothing_item_ids } = req.body;
+
+  if (
+    !clothing_item_ids ||
+    !Array.isArray(clothing_item_ids) ||
+    clothing_item_ids.length === 0
+  ) {
     return next(
-      new BaseAudioContext("clothing_item_id is required to add item.")
+      new BadRequestError(
+        "clothing_item_ids are required and must be a non-empty array to add items."
+      )
     );
   }
+
   try {
-    // Checking if packing list exists and belongs to the user.
-    // Checking if clothing items exists.
-    const result = await pool.query(
-      "INSERT INTO packing_list_items (packing_list_id, clothing_item_id) VALUES ($1, $2) RETURNING *;",
-      [packingListId, clothing_item_id]
-    );
-    return res.status(201).send(result.rows[0]);
+    for (const clothing_item_id of clothing_item_ids) {
+      await pool.query(
+        "INSERT INTO packing_list_items (packing_list_id, clothing_item_id) VALUES ($1, $2);",
+        [packingListId, clothing_item_id]
+      );
+    }
+
+    return res
+      .status(201)
+      .send({ message: "Items added to packing list successfully." }); 
   } catch (err) {
     return next(err);
   }
