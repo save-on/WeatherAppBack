@@ -14,10 +14,17 @@ const extractBearerToken = (authorization) =>
 
 const auth = (req, res, next) => {
   const { authorization } = req.headers;
+
+  console.log("Headers received: ", req.headers);
+  console.log("Authorization header: ", authorization);
+
   if (!authorization || !authorization.startsWith("Bearer ")) {
     return handleAuthError(res);
   }
+
   const token = extractBearerToken(authorization);
+  console.log("Received Token: ", token);
+
   let payload;
 
   try {

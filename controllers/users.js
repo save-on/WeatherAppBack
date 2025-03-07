@@ -26,10 +26,6 @@ const createUser = async (req, res, next) => {
     );
     return res.status(created).send({ message: "Account creation successful" });
   } catch (err) {
-    console.log(err);
-    if (err.code === "23505") {
-      return next(new BadRequestError("User email already exists, try again."));
-    }
     return next(err);
   }
 };
