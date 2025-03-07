@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const fs = require('node:fs/promises');
 const util = require('util');
 const { created } = require("../utils/constants");
+const db = require("../db");
 
 const BadRequestError = require("../utils/errorclasses/BadRequestError");
 const UnauthorizedError = require("../utils/errorclasses/UnauthorizedError");
@@ -18,6 +19,39 @@ const getPackingLists = async (req, res, next) => {
     return res.send(result.rows);
   } catch (err) {
     return next(err);
+  }
+};
+
+const getItemsForPackingList = async (req, res, next) => {
+  try {
+      const packingListId = req.params.packingListId;
+      console.log("getPackingListItems - packingListId: ", packingListId, ", type: ", typeof packingListId);
+
+      const query = `
+      SELECT
+      clothing_items.id AS clothing_item_id,
+      clothing_items.name AS clothing_item_name,
+      clothing_items.clothing_image AS clothing_image,
+      clothing_items.weather_condition AS clothing_weather_condition,
+      clothing_items.affiliate_link AS clothing_affiliate_link,
+      clothing_items.created_at AS clothing_created_at,
+      clothing_items.owner AS clothing_owner
+      FROM clothing_items
+      INNER JOIN packing_list_items  
+      ON clothing_items.id = packing_list_items.clothing_item_id
+      WHERE packing_list_items.packing_list_id = $1
+      `;
+
+      const values = [packingListId];
+      const result = await db.query(query, values);
+      const items = result.rows;
+
+      if(!items || items.length === 0) {
+          return res.status(404).json({ message: "No items found for this packing list"});
+      }
+      res.status(200).json(items);
+  } catch (err) {
+      next(err);
   }
 };
 
@@ -65,10 +99,10 @@ const createPackingList = async (req, res, next) => {
         return next(new BadRequestError("Packing list name is required."));
     }
 
-    let image_filepath;
+    let packinglist_image;
     if (imageFile) {
-        image_filepath = `/uploads/${req.file.filename}`; // Simplified file path, like clothing items
-        console.log("Simplified image_filepath: ", image_filepath); // Log the simplified path
+        packinglist_image = `/uploads/${req.file.filename}`; // Simplified file path, like clothing items
+        console.log("Simplified packinglist_image: ", packinglist_image); // Log the simplified path
     }
 
     try {
@@ -76,11 +110,11 @@ const createPackingList = async (req, res, next) => {
             `INSERT INTO packing_lists (
                 name,
                 owner,
-                image_filepath
+                packinglist_image
                 )
                 VALUES ($1, $2, $3)
                 RETURNING *;`,
-            [name, owner_id, image_filepath]
+            [name, owner_id, packinglist_image]
         );
         return res.status(201).send(result.rows[0]);
     } catch (dbError) {
@@ -179,6 +213,7 @@ const removeItemFromPackingList = async (req, res, next) => {
 module.exports = {
   getPackingLists,
   getPackingListById,
+  getItemsForPackingList,
   createPackingList,
   updatePackingList,
   deletePackingList,

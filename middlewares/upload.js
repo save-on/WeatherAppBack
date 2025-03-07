@@ -1,9 +1,15 @@
 const multer = require("multer");
+const path = require('path');
 
 //Setting up storage (files wil be storedin 'uploads/' folder)
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "uploads/");
+        let uploadDir = path.join(__dirname, "..", "public", "uploads");
+
+        if(req.originalUrl.startsWith('/api/packing-lists')) {
+            uploadDir = path.join(uploadDir, 'packing-list-images');
+        }
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
         cb(null, `${Date.now()}-${file.originalname}`);
