@@ -9,6 +9,8 @@ const multer = require("multer");
 const { errors } = require("celebrate");
 require("dotenv").config();
 
+console.log("backend startup: Value of process.env.JWT_TOKEN at startup: ", process.env.JWT_TOKEN);
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
