@@ -1,13 +1,16 @@
+
+require('dotenv').config();
 const path = require('path');
 const pool = require("./db");
 const express = require("express");
 const mainRouter = require("./routes/index");
 const errorHandler = require("./middlewares/error-handler");
 
+
 const cors = require("cors");
 const multer = require("multer");
 const { errors } = require("celebrate");
-require("dotenv").config();
+
 
 console.log("backend startup: Value of process.env.JWT_TOKEN at startup: ", process.env.JWT_TOKEN);
 
@@ -21,6 +24,8 @@ const startApp = () => {
 };
 
 startApp(); // Could be fixed later
+
+
 
 app.use(cors({
   origin:'http://localhost:3000'

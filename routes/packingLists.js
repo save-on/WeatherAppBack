@@ -18,6 +18,8 @@ const {
   validatePackingListItemId,
 } = require("../middlewares/validation");
 
+
+
 router.get("/:packingListId/items", auth, getItemsForPackingList)
 router.get("/", auth, getPackingLists);
 router.get("/:packingListId", auth, validatePackingListId, getPackingListById);
