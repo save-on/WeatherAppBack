@@ -5,8 +5,7 @@ const pool = require("./db");
 const express = require("express");
 const mainRouter = require("./routes/index");
 const errorHandler = require("./middlewares/error-handler");
-
-
+const packingLists = require("./routes/packingLists");
 const cors = require("cors");
 const multer = require("multer");
 const { errors } = require("celebrate");
@@ -34,6 +33,9 @@ app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
 app.use("/uploads", cors({ origin: "http://localhost:3000" }), express.static(path.join(__dirname, 'public', 'uploads')));
+app.use("/packing-lists", packingLists);
+
+
 
 app.use("/", mainRouter);
 app.use(errors());

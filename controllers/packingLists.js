@@ -159,6 +159,7 @@ const deletePackingList = async (req, res, next) => {
   const { packingListId } = req.params;
   const owner_id = req.user._id;
   try {
+    console.log("START OF DELETING PACKING LIST")
     const result = await pool.query(
       "DELETE FROM packing_lists WHERE id = $1 AND owner = $2 RETURNING *;",
       [packingListId, owner_id]

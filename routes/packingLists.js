@@ -34,15 +34,35 @@ router.post(
 );
 
 router.put("/:packingListId", auth, validatePackingListId, updatePackingList);
+router.delete('/:packingListId', auth, deletePackingList);
+
+// router.delete('/packing-lists/:packingListId', auth, async (req, res, next) => {
+//   try {
+//     const packingListId = req.params.packingListId;
+//     const userId = req.user._id;
+
+//     const packingList = await pool.query (
+//       'SELECT * FROM packing_lists WHERE id = $1 AND owner = $2',
+//       [packingListId, userId]
+//     );
+//     if (packingList.rows.length === 0 ) {
+//       return res.status(400).json({ message: "Packing list not found or unauthorized." });
+//     }
+
+//     await pool.query(
+//       'DELETE FROM packing_lists WHERE id = $1', [packingListId]
+//     );
+//     res.status(204).send();
+//   } catch (error) {
+//     console.error("Error deleting packing list: ", error);
+//     next(error);
+//   }
+// });
+
+
 
 router.delete(
-  "/:packingListId",
-  auth,
-  validatePackingListId,
-  deletePackingList
-);
-router.delete(
-  "/:packingListId/items/:itemId",
+  "/packing-lists/:packingListId/items/:itemId",
   auth,
   validatePackingListId,
   validatePackingListItemId,
