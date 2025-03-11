@@ -18,6 +18,7 @@ const auth = (req, res, next) => {
   console.log("Headers received: ", req.headers);
   console.log("Authorization header: ", authorization);
 
+
   if (!authorization || !authorization.startsWith("Bearer")) {
     console.log("No valid Authorization header found.");
     return handleAuthError(res);
@@ -25,16 +26,6 @@ const auth = (req, res, next) => {
 
   const token = extractBearerToken(authorization);
   console.log("Received Token: ", token);
-
-  // if(!jwtToken) {
-  //   console.error("JWT Secret key (jwtToken) is not definedin middleware!");
-  //   return res.status(500).sent({ error: "Backend configuration error" });
-  // }
-  // console.log(
-  //   "JWT Secret Key (jwtToken) used for verification (middleware):",
-  //   jwt.substring(0, 6),
-  //   +"...(truncated for security)"
-  // );
 
   let payload;
 

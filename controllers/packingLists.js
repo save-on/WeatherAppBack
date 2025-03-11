@@ -1,9 +1,4 @@
 const pool = require("../db");
-const path = require("path");
-const crypto = require("crypto");
-const fs = require("node:fs/promises");
-const util = require("util");
-const { created } = require("../utils/constants");
 const db = require("../db");
 
 const BadRequestError = require("../utils/errorclasses/BadRequestError");
@@ -239,3 +234,4 @@ module.exports = {
   addItemToPackingList,
   removeItemFromPackingList,
 };
+

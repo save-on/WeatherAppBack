@@ -16,6 +16,7 @@ const getClothingItems = async (req, res, next) => {
 };
 
 
+
 const createClothingItem = async (req, res, next) => {
   //Extract form fileds from req.body
   const{ name, weather_condition, affiliate_link } = req.body;
@@ -46,6 +47,7 @@ const createClothingItem = async (req, res, next) => {
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;`,
       [name, weather_condition, _id, affiliate_link || null, [], file_image_path]
+
     );
 
     //Send a success response with thenew item data

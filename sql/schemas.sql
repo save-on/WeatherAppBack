@@ -38,6 +38,7 @@ CREATE TABLE clothing_item_likes (
 	PRIMARY KEY (clothing_item_id, user_id)
 );
 
+
 CREATE TABLE packing_list_items (
     id SERIAL PRIMARY KEY,
     packing_list_id INTEGER NOT NULL REFERENCES packing_lists(id) ON DELETE CASCADE, 
@@ -46,3 +47,4 @@ CREATE TABLE packing_list_items (
     notes TEXT,
     added_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
+

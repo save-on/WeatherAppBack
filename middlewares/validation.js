@@ -22,7 +22,9 @@ module.exports.validateCardBody = celebrate({
         "any.required": 'A "weather" field selection is required',
         "any.only": 'Please select a valid "weather" field selection',
       }),
+
     affiliate_link: Joi.string().optional().empty("").custom(validateURL),
+
   }),
 });
 
@@ -72,6 +74,7 @@ module.exports.validateItemId = celebrate({
     itemId: Joi.number().required().messages({
       "string.empty": 'The "itemId" field is required',
       "string.number": 'The "itemId" field must be an integer',
+
     }),
   }),
 });
@@ -94,3 +97,5 @@ module.exports.validatePackingListItemId = celebrate({
     }),
   }),
 });
+
+

@@ -8,6 +8,7 @@ const upload = require("../middlewares/upload");
 const NotFoundError = require("../utils/errorclasses/NotFoundError");
 const auth = require("../middlewares/auth.js");
 
+
 router.use("/clothing-items", clothingItemRouter);
 router.use("/clothing-items", likeRouter);
 router.use("/weather", weatherApi);
