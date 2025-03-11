@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-const jwtToken = process.env.JWT_TOKEN;
+// const jwtToken = process.env.JWT_TOKEN;
 
 const handleAuthError = (res) => {
   return res.status(401).send({
@@ -18,7 +18,9 @@ const auth = (req, res, next) => {
   console.log("Headers received: ", req.headers);
   console.log("Authorization header: ", authorization);
 
-  if (!authorization || !authorization.startsWith("Bearer ")) {
+
+  if (!authorization || !authorization.startsWith("Bearer")) {
+    console.log("No valid Authorization header found.");
     return handleAuthError(res);
   }
 
@@ -28,10 +30,14 @@ const auth = (req, res, next) => {
   let payload;
 
   try {
-    payload = jwt.verify(token, jwtToken);
+    console.log("JWT_TOKEN (auth middleware):", process.env.JWT_TOKEN);
+    payload = jwt.verify(token, process.env.JWT_TOKEN);
+    console.log(process.env.JWT_TOKEN);
+    console.log("Decoded Payload (JWT verified successfully): ", payload);
     req.user = payload;
   } catch (error) {
-    console.error(error);
+    console.error("JWT Verification Error:", error.name);
+    console.error("JWT Verification Error Details:", error.message);
     return handleAuthError(res);
   }
   return next();

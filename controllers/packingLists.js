@@ -1,78 +1,237 @@
 const pool = require("../db");
-const { created } = required("../utils/constants");
+const db = require("../db");
 
 const BadRequestError = require("../utils/errorclasses/BadRequestError");
 const UnauthorizedError = require("../utils/errorclasses/UnauthorizedError");
 
-const getPackingLists = async(req, res, next) => {
-    try {
-        const result = await pool.query(
-            "SELECT * FROM packing_lists ORDER BY created_at DESC;"
-        );
-        return res.send(result.rows);
-    } catch(err) {
-        return next(err);
+const getPackingLists = async (req, res, next) => {
+  const owner_id = req.user._id; //Getting user id from auth middleware
+  try {
+    const result = await pool.query(
+      "SELECT * FROM packing_lists WHERE owner = $1 ORDER BY created_at DESC;",
+      [owner_id]
+    );
+    return res.send(result.rows);
+  } catch (err) {
+    return next(err);
+  }
+};
+
+const getItemsForPackingList = async (req, res, next) => {
+  try {
+    const packingListId = req.params.packingListId;
+    console.log(
+      "getPackingListItems - packingListId: ",
+      packingListId,
+      ", type: ",
+      typeof packingListId
+    );
+
+    const query = `
+      SELECT
+      clothing_items.id AS clothing_item_id,
+      clothing_items.name AS clothing_item_name,
+      clothing_items.clothing_image AS clothing_image,
+      clothing_items.weather_condition AS clothing_weather_condition,
+      clothing_items.affiliate_link AS clothing_affiliate_link,
+      clothing_items.created_at AS clothing_created_at,
+      clothing_items.owner AS clothing_owner
+      FROM clothing_items
+      INNER JOIN packing_list_items  
+      ON clothing_items.id = packing_list_items.clothing_item_id
+      WHERE packing_list_items.packing_list_id = $1
+      `;
+
+    const values = [packingListId];
+    const result = await db.query(query, values);
+    const items = result.rows;
+
+    if (!items || items.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No items found for this packing list" });
     }
-} ;
+    res.status(200).json(items);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getPackingListById = async (req, res, next) => {
+  const { packingListId } = req.params;
+  const owner_id = req.user._id;
+  try {
+    // Fetching packing list details
+    const packingListResult = await pool.query(
+      "SELECT * FROM packing_lists WHERE id = $1 AND owner = $2",
+      [packingListId, owner_id]
+    );
+    if (packingListResult.rows.length === 0) {
+      return next(
+        new BadRequestError("Packing list not found or you are not authorized")
+      );
+    }
+    const packingList = packingListResult.rows[0];
+
+    // Fetching items in the packing list
+    const itemsResult = await pool.query(
+      `SELECT pli.id AS packing_list_item_id,
+            pli.quatity, 
+            pli.notes,
+            ci.*
+            FROM packing_list_items pli
+            JOIN clothing_items ci ON pli.clothing_item_id = ci.id
+            WHERE pli.packing_list_id = $1`,
+      [packingListId]
+    );
+    packingListResult.items = itemsResult.rows;
+
+    return res.send(packingList);
+  } catch (err) {
+    return next(err);
+  }
+};
 
 const createPackingList = async (req, res, next) => {
-    const { name, weather_condition, affiliate_link, clothing_image } = req.body;
-    const { _id } = req.user;
-    try {
-        const result = await pool.query(
-            `INSERT INTO packing_lists (
-            name, 
-            weather_condition,
-            owner,
-            affiliate_link,
-            clothing_image
-            )
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *;`
-            [name, weather_condition, _id, affiliate_link || null, [], clothing_image]
-        );
-        return res.status(created).send(result.rows[0]);
-    } catch (err) {
-        return next(err);
+  const { name, weather_condition, location } = req.body;
+  const owner_id = req.user._id;
+  const imageFile = req.file;
+
+  if (!name) {
+    return next(new BadRequestError("Packing list name is required."));
+  }
+
+  let packinglist_image;
+  if (imageFile) {
+    packinglist_image = `/uploads/${req.file.filename}`; // Simplified file path, like clothing items
+    console.log("Simplified packinglist_image: ", packinglist_image); // Log the simplified path
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO packing_lists (
+                name,
+                owner,
+                packinglist_image
+                )
+                VALUES ($1, $2, $3)
+                RETURNING *;`,
+      [name, owner_id, packinglist_image]
+    );
+    return res.status(201).send(result.rows[0]);
+  } catch (dbError) {
+    console.error("Database error: ", dbError);
+    return next(dbError);
+  }
+};
+
+const updatePackingList = async (req, res, next) => {
+  const { packingListId } = req.params;
+  const { name } = req.body;
+  const owner_id = req.user._id;
+  if (!name) {
+    return next(
+      new BadRequestError("Packing list name is required for update.")
+    );
+  }
+  try {
+    const result = await pool.query(
+      "UPDATE packing_lists SET name = $1, updated_at = now() WHERE id = $2 AND owner = $3 RETURNING *;",
+      [name, packingListId, owner_id]
+    );
+    if (result.rows.length === 0) {
+      return next(
+        new UnauthorizedError("Not authorized to update this packing list.")
+      );
     }
+    return res.send(result.rows[0]);
+  } catch (err) {
+    return next(err);
+  }
 };
 
 const deletePackingList = async (req, res, next) => {
-    const { packingListId } = req.params;
-    const { _id } = req.user;
-    if (!packingListId) {
-        return next(
-            new BadRequestError(
-                "Missing valid PackingListId. The request could not be processed."
-            )
-        );
+  const { packingListId } = req.params;
+  const owner_id = req.user._id;
+  try {
+    console.log("START OF DELETING PACKING LIST")
+    const result = await pool.query(
+      "DELETE FROM packing_lists WHERE id = $1 AND owner = $2 RETURNING *;",
+      [packingListId, owner_id]
+    );
+    if (result.rows.length === 0) {
+      return next(
+        new UnauthorizedError("Not authorized to delete this packing list.")
+      );
     }
-    try {
-        const result = await pool.query(
-            `WITH deleted_packingList AS (
-            SELECT id, owner
-            FROM packing_lists
-            WHERE id = $1
-            )
-            DELETE FROM packing_lists
-            USING deleted_packingList
-            WHERE packing_lists.id = deleted_packingList.id
-            AND delete_packingList.owner = $2
-            RETURNING delteted_packingList.id, deleted_packingList.owner;`,
-            [packingListId, _id]
-        );
-        if (result.rowCount === 0) {
-            return next(
-                new UnauthorizedError(
-                    "You are not authorized to delete this item, or it doesn't exist."
-                )
-            );
-        }
-        return res.status(200).send({ message: "Deletion successful" });
-    } catch (err) {
-        next(err);
-    }
+    return res
+      .status(200)
+      .send({ message: "Packing list deleted successfully." });
+  } catch (err) {
+    next(err);
+  }
 };
 
+const addItemToPackingList = async (req, res, next) => {
+  const { packingListId } = req.params;
+  const { clothing_item_ids } = req.body;
 
-module.exports = { getPackingLists, createPackingList, deletePackingList };
+  if (
+    !clothing_item_ids ||
+    !Array.isArray(clothing_item_ids) ||
+    clothing_item_ids.length === 0
+  ) {
+    return next(
+      new BadRequestError(
+        "clothing_item_ids are required and must be a non-empty array to add items."
+      )
+    );
+  }
+
+  try {
+    for (const clothing_item_id of clothing_item_ids) {
+      await pool.query(
+        "INSERT INTO packing_list_items (packing_list_id, clothing_item_id) VALUES ($1, $2);",
+        [packingListId, clothing_item_id]
+      );
+    }
+
+    return res
+      .status(201)
+      .send({ message: "Items added to packing list successfully." }); 
+  } catch (err) {
+    return next(err);
+  }
+};
+
+const removeItemFromPackingList = async (req, res, next) => {
+  const { packingListId, itemId } = req.params;
+  try {
+    const result = await pool.query(
+      "DELETE FROM packing_list_items WHERE id = $1 AND packing_list_id = $2 RETURNING *;",
+      [itemId, packingListId]
+    );
+    if (result.rows.length === 0) {
+      return next(
+        new BadRequestError(
+          "Packing list item not found or not in this packing list."
+        )
+      );
+    }
+    return res.send({ message: "Item removed from packing list." });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+module.exports = {
+  getPackingLists,
+  getPackingListById,
+  getItemsForPackingList,
+  createPackingList,
+  updatePackingList,
+  deletePackingList,
+  addItemToPackingList,
+  removeItemFromPackingList,
+};
+

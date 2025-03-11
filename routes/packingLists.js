@@ -1,16 +1,49 @@
 const router = require("express").Router();
 const {
   getPackingLists,
+  getPackingListById,
+  getItemsForPackingList,
   createPackingList,
+  updatePackingList,
   deletePackingList,
+  addItemToPackingList,
+  removeItemFromPackingList,
 } = require("../controllers/packingLists");
 
 const auth = require("../middlewares/auth");
+const upload = require("../middlewares/upload");
 
-const validatePackingListId = require("../middlewares/validation")
+const {
+  validatePackingListId,
+  validatePackingListItemId,
+} = require("../middlewares/validation");
 
-router.get("/profile/packing-lists", getPackingLists);
-router.post("/profile/packing-lists", auth, validatePackingListId, createPackingList);
 
+
+router.get("/:packingListId/items", auth, getItemsForPackingList)
+router.get("/", auth, getPackingLists);
+router.get("/:packingListId", auth, validatePackingListId, getPackingListById);
+
+router.post("/", auth, upload.single('image'), createPackingList);
+
+router.post(
+  "/:packingListId/items",
+  auth,
+  validatePackingListId,
+  addItemToPackingList
+);
+
+router.put("/:packingListId", auth, validatePackingListId, updatePackingList);
+router.delete('/:packingListId', auth, deletePackingList);
+
+
+router.delete(
+  "/packing-lists/:packingListId/items/:itemId",
+  auth,
+  validatePackingListId,
+  validatePackingListItemId,
+  removeItemFromPackingList
+);
 
 module.exports = router;
+

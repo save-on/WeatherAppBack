@@ -10,6 +10,16 @@ CREATE TABLE users (
 	location VARCHAR(255)
 );
 
+CREATE TABLE packing_lists (
+	id SERIAL PRIMARY KEY,
+	name VARCHAR(255) NOT NULL,
+	owner INT REFERENCES users(id) on DELETE CASCADE,
+	created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+	updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+	packinglist_image TEXT NOT NULL,
+	weather_condition weather NULL,
+)
+
 CREATE TABLE clothing_items (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(30) NOT NULL,
@@ -28,11 +38,13 @@ CREATE TABLE clothing_item_likes (
 	PRIMARY KEY (clothing_item_id, user_id)
 );
 
-CREATE TABLE packing_lists (
-	packing_list_id SERIAL PRIMARY KEY,
-	name VARCHAR(50) NOT NULL,
-	weather_condition weather NOT NULL,
-	owner INT REFERENCES users(id) ON DELETE CASCADE,
-	created_at TIMESTAMP DEFAULT current_timestamp,
-	image_filepath TEXT NOT NULL
-)
+
+CREATE TABLE packing_list_items (
+    id SERIAL PRIMARY KEY,
+    packing_list_id INTEGER NOT NULL REFERENCES packing_lists(id) ON DELETE CASCADE, 
+    clothing_item_id INTEGER NOT NULL REFERENCES clothing_items(id) ON DELETE CASCADE, 
+    quantity INT DEFAULT 1,
+    notes TEXT,
+    added_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+

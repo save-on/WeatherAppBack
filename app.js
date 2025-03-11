@@ -1,10 +1,17 @@
+
+require('dotenv').config();
+const path = require('path');
 const pool = require("./db");
 const express = require("express");
 const mainRouter = require("./routes/index");
 const errorHandler = require("./middlewares/error-handler");
+const packingLists = require("./routes/packingLists");
 const cors = require("cors");
+const multer = require("multer");
 const { errors } = require("celebrate");
-require("dotenv").config();
+
+
+console.log("backend startup: Value of process.env.JWT_TOKEN at startup: ", process.env.JWT_TOKEN);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -17,8 +24,18 @@ const startApp = () => {
 
 startApp(); // Could be fixed later
 
-app.use(cors());
-app.use(express.json());
+
+
+app.use(cors({
+  origin:'http://localhost:3000'
+}));
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ extended: true, limit: "100mb" }));
+
+app.use("/uploads", cors({ origin: "http://localhost:3000" }), express.static(path.join(__dirname, 'public', 'uploads')));
+app.use("/packing-lists", packingLists);
+
+
 
 app.use("/", mainRouter);
 app.use(errors());
