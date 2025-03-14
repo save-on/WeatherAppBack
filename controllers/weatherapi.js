@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const searchWeather = async (req, res) => {
   const { location } = req.body;
   try {
