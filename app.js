@@ -27,7 +27,7 @@ startApp(); // Could be fixed later
 
 
 app.use(cors({
-  origin: 'https://save-on.github.io'
+  origin: ['http://localhost:3000', 'https://travelwear-aa3b8a7cc158.herokuapp.com']
 }));
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
