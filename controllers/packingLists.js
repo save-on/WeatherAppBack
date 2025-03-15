@@ -206,11 +206,26 @@ const addItemToPackingList = async (req, res, next) => {
 
 const removeItemFromPackingList = async (req, res, next) => {
   const { packingListId, itemId } = req.params;
+  console.log("packingListId: ", packingListId);
+  console.log("itemId: ", itemId);
+  const userId = req.user._id;
+
   try {
-    const result = await pool.query(
-      "DELETE FROM packing_list_items WHERE id = $1 AND packing_list_id = $2 RETURNING *;",
-      [itemId, packingListId]
+    const authCheck = await pool.query(
+      "SELECT 1 FROM packing_lists WHERE id = $1 AND owner = $2;",
+      [packingListId, userId]
     );
+
+    if (authCheck.rows.length === 0) {
+      return next(
+        new UnauthorizedError("You are not authorized to modify this packing list.")
+      );
+    }
+    const result = await pool.query(
+      "DELETE FROM packing_list_items WHERE packing_list_id = $1 AND clothing_item_id = $2 RETURNING *;",
+      [packingListId, itemId]
+    );
+    
     if (result.rows.length === 0) {
       return next(
         new BadRequestError(
@@ -218,7 +233,7 @@ const removeItemFromPackingList = async (req, res, next) => {
         )
       );
     }
-    return res.send({ message: "Item removed from packing list." });
+    return res.status(204).send();
   } catch (err) {
     return next(err);
   }
