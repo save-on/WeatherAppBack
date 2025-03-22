@@ -39,12 +39,12 @@ CREATE TABLE clothing_item_likes (
 );
 
 
-CREATE TABLE packing_list_items (
+CREATE TABLE packing_list_items2 (
     packing_list_id INTEGER NOT NULL REFERENCES packing_lists(id) ON DELETE CASCADE, 
     clothing_item_id INTEGER NOT NULL REFERENCES clothing_items(id) ON DELETE CASCADE, 
     quantity INT DEFAULT 1,
     notes TEXT,
-    added_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+    added_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
 	PRIMARY KEY (packing_list_id, clothing_item_id)
 );
 
