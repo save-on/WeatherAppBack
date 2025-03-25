@@ -30,7 +30,7 @@ app.use(cors());
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
 
-app.use("/uploads", express.static(path.join(__dirname, 'public', 'uploads')));
+app.use("uploads", express.static(path.join(__dirname, 'public', 'uploads')));
 app.use("/packing-lists", packingLists);
 
 
@@ -38,7 +38,7 @@ app.use("/packing-lists", packingLists);
 app.use("/", mainRouter);
 app.use(errors());
 app.use(errorHandler);
-app.use("/uploads", express.static("uploads"));
+app.use("uploads", express.static("uploads"));
 
 const shutdownHandler = async () => {
   console.log("Closing database connection pool...");
