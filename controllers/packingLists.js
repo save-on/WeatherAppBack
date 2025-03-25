@@ -106,7 +106,7 @@ const createPackingList = async (req, res, next) => {
 
   let packinglist_image;
   if (imageFile) {
-    packinglist_image = `/uploads/${req.file.filename}`; // Simplified file path, like clothing items
+    packinglist_image = `uploads/${req.file.filename}`; // Simplified file path, like clothing items
     console.log("Simplified packinglist_image: ", packinglist_image); // Log the simplified path
   }
 
