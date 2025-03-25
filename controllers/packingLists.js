@@ -93,6 +93,9 @@ const getPackingListById = async (req, res, next) => {
 };
 
 const createPackingList = async (req, res, next) => {
+  console.log("Inside createPackingList controller");
+  console.log("Request Body (text fields): ", req.body);
+  console.log("Request File (image):", req.file);
   const { name, weather_condition, location } = req.body;
   const owner_id = req.user._id;
   const imageFile = req.file;
@@ -112,11 +115,12 @@ const createPackingList = async (req, res, next) => {
       `INSERT INTO packing_lists (
                 name,
                 owner,
-                packinglist_image
+                packinglist_image,
+                weather_condition
                 )
-                VALUES ($1, $2, $3)
+                VALUES ($1, $2, $3, $4)
                 RETURNING *;`,
-      [name, owner_id, packinglist_image]
+      [name, owner_id, packinglist_image, weather_condition]
     );
     return res.status(201).send(result.rows[0]);
   } catch (dbError) {
