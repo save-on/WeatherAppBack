@@ -50,7 +50,6 @@ const signInUser = async (req, res, next) => {
       return next(new UnauthorizedError("Incorrect email or password"));
     }
     const { id, name, image_filepath, location } = user;
-    console.log("JWT_TOKEN (userController):", process.emitWarning.JWT_TOKEN);
     const token = await jwt.sign({ _id: id }, process.env.JWT_TOKEN, {
       expiresIn: "7d",
     });

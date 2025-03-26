@@ -15,16 +15,10 @@ const getClothingItems = async (req, res, next) => {
   }
 };
 
-
-
 const createClothingItem = async (req, res, next) => {
   //Extract form fileds from req.body
   const{ name, weather_condition, affiliate_link } = req.body;
   const { _id } = req.user; 
-  console.log("req.user: ", req.user);
-  console.log("req.file:", req.file);
-  
-  
   //Handle the uploaded image file
   let file_image_path; // Variable to store the image file path
   if (req.file) {
@@ -50,7 +44,7 @@ const createClothingItem = async (req, res, next) => {
 
     );
 
-    //Send a success response with thenew item data
+    //Send a success response with the new item data
     return res.status(201).send(result.rows[0]);
   } catch (err) {
     return next(err);
