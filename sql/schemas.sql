@@ -17,7 +17,7 @@ CREATE TABLE packing_lists (
 	created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
 	updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
 	packinglist_image TEXT NOT NULL,
-	weather_condition weather NULL
+	weather_condition weather NULL,
 )
 
 CREATE TABLE clothing_items (
@@ -39,7 +39,7 @@ CREATE TABLE clothing_item_likes (
 );
 
 
-CREATE TABLE packing_list_items (
+CREATE TABLE packing_list_items2 (
     packing_list_id INTEGER NOT NULL REFERENCES packing_lists(id) ON DELETE CASCADE, 
     clothing_item_id INTEGER NOT NULL REFERENCES clothing_items(id) ON DELETE CASCADE, 
     quantity INT DEFAULT 1,
