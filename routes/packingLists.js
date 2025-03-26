@@ -46,14 +46,9 @@ router.delete(
 );
 
 router.delete("/:packingListId/items/:itemId", auth, async (req, res, next) => {
-  console.log("Delete request received!");
-  console.log("Packing List ID: ", req.params.packingListId);
-  console.log("Item ID: ", req.params.itemId);
-
   try {
     await removeItemFromPackingList(req, res, next); 
   } catch (error) {
-    console.error("Error in delete route:", error);
     res.status(500).send({ message: "Internal server error" });
   }
 });

@@ -20,13 +20,6 @@ const getPackingLists = async (req, res, next) => {
 const getItemsForPackingList = async (req, res, next) => {
   try {
     const packingListId = req.params.packingListId;
-    console.log(
-      "getPackingListItems - packingListId: ",
-      packingListId,
-      ", type: ",
-      typeof packingListId
-    );
-
     const query = `
       SELECT
       clothing_items.id AS clothing_item_id,
@@ -93,9 +86,6 @@ const getPackingListById = async (req, res, next) => {
 };
 
 const createPackingList = async (req, res, next) => {
-  console.log("Inside createPackingList controller");
-  console.log("Request Body (text fields): ", req.body);
-  console.log("Request File (image):", req.file);
   const { name, weather_condition, location } = req.body;
   const owner_id = req.user._id;
   const imageFile = req.file;
@@ -107,7 +97,6 @@ const createPackingList = async (req, res, next) => {
   let packinglist_image;
   if (imageFile) {
     packinglist_image = `uploads/${req.file.filename}`; // Simplified file path, like clothing items
-    console.log("Simplified packinglist_image: ", packinglist_image); // Log the simplified path
   }
 
   try {
@@ -124,7 +113,6 @@ const createPackingList = async (req, res, next) => {
     );
     return res.status(201).send(result.rows[0]);
   } catch (dbError) {
-    console.error("Database error: ", dbError);
     return next(dbError);
   }
 };
@@ -158,7 +146,6 @@ const deletePackingList = async (req, res, next) => {
   const { packingListId } = req.params;
   const owner_id = req.user._id;
   try {
-    console.log("START OF DELETING PACKING LIST")
     const result = await pool.query(
       "DELETE FROM packing_lists WHERE id = $1 AND owner = $2 RETURNING *;",
       [packingListId, owner_id]
@@ -210,8 +197,6 @@ const addItemToPackingList = async (req, res, next) => {
 
 const removeItemFromPackingList = async (req, res, next) => {
   const { packingListId, itemId } = req.params;
-  console.log("packingListId: ", packingListId);
-  console.log("itemId: ", itemId);
   const userId = req.user._id;
 
   try {
