@@ -8,7 +8,7 @@ const storage = multer.diskStorage({
 
         let uploadDir = path.join(__dirname, "..", "public", "uploads");
 
-        if(req.originalUrl.startsWith('/api/packing-lists')) {
+        if(req.originalUrl.startsWith('/profile/packing-lists')) {
             uploadDir = path.join(uploadDir, 'packing-list-images');
         }
         cb(null, uploadDir);
