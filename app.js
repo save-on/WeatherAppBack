@@ -10,9 +10,6 @@ const cors = require("cors");
 const multer = require("multer");
 const { errors } = require("celebrate");
 
-
-console.log("backend startup: Value of process.env.JWT_TOKEN at startup: ", process.env.JWT_TOKEN);
-
 const app = express();
 const PORT = process.env.PORT || 3001;
 
