@@ -5,7 +5,6 @@ const {
   deleteClothingItem,
 } = require("../controllers/clothingItems");
 const auth = require("../middlewares/auth");
-const upload = require("../middlewares/upload");
 
 const {
   validateCardBody,
