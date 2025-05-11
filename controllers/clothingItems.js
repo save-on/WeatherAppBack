@@ -57,4 +57,4 @@ const deleteClothingItem = async (req, res, next) => {
   }
 };
 
-module.exports = { getClothingItems, createClothingItem, deleteClothingItem };
+module.exports = { createClothingItem, deleteClothingItem };
