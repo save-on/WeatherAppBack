@@ -1,5 +1,5 @@
-require('dotenv').config();
-const path = require('path');
+require("dotenv").config();
+const path = require("path");
 const pool = require("./db");
 const express = require("express");
 const mainRouter = require("./routes/index");
@@ -18,10 +18,8 @@ const startApp = () => {
 
 startApp();
 
-
-
 app.use(cors());
-
+app.use(express.json());
 app.use("/", mainRouter);
 app.use(errors());
 app.use(errorHandler);

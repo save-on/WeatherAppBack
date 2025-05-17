@@ -1,14 +1,15 @@
 const router = require("express").Router();
 const clothingItemRouter = require("./clothingItems");
 const userRouter = require("./users");
-const weatherApi = require("./weatherapi");
+const weatherApiRouter = require("./weatherapi");
+const packingListsRouter = require("./packingLists.js");
 const auth = require("../middlewares/auth.js");
 
 
 router.use("/clothing-items", clothingItemRouter);
-router.use("/weather", weatherApi);
+router.use("/weather", weatherApiRouter);
 router.use("/users", userRouter);
-router.use("/items", clothingItemRouter);
+router.use("/packing-lists", packingListsRouter);
 router.use("/", userRouter);
 
 

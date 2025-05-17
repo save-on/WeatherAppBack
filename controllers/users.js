@@ -14,7 +14,7 @@ const createUser = async (req, res, next) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     await pool.query(
-      `INSERT INTO users (
+      `INSERT INTO users ( 
       name, 
       email, 
       image_filepath, 
