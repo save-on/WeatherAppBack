@@ -49,7 +49,7 @@ const signInUser = async (req, res, next) => {
     if (!user) {
       return next(new UnauthorizedError("Incorrect email or password"));
     }
-    const { id, name, image_filepath, location } = user;
+    const { id, name, image_filepath, location, email: userEmail } = user;
     const token = await jwt.sign({ _id: id }, process.env.JWT_TOKEN, {
       expiresIn: "7d",
     });
@@ -59,6 +59,7 @@ const signInUser = async (req, res, next) => {
       _id: id,
       avatar: image_filepath,
       location,
+      email: userEmail,
     });
   } catch (err) {
     if (err.message === "Incorrect email or password") {
@@ -74,12 +75,13 @@ const getCurrentUser = async (req, res, next) => {
     const result = await pool.query(`SELECT * FROM users WHERE id = $1;`, [
       _id,
     ]);
-    const { id, name, image_filepath, location } = result.rows[0];
+    const { id, name, image_filepath, location, email } = result.rows[0];
     return res.send({
       _id: id,
       name,
       avatar: image_filepath,
       location,
+      email,
     });
   } catch (err) {
     console.error(err);
