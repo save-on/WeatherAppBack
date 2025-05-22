@@ -1,5 +1,7 @@
 const pool = require("../db");
 const db = require("../db");
+const nodemailer = require("nodemailer");
+const UserModal = require("../models/userModels");
 
 const BadRequestError = require("../utils/errorclasses/BadRequestError");
 const UnauthorizedError = require("../utils/errorclasses/UnauthorizedError");
@@ -227,6 +229,116 @@ const removeItemFromPackingList = async (req, res, next) => {
     return next(err);
   }
 };
+
+const sendPackingListEmail = async (req, res) => {
+  console.log("Received request to send packing list email.");
+  const { packingList, tripName, tripDates } = req.body;
+  const userId = req.user._id; 
+
+  if (!packingList) {
+    return res.status(400).send({ message: "Packing list data is required." });
+  }
+
+  try {
+    const user = await UserModel.findById(userId); 
+    if (!user || !user.email) {
+      console.error("User not found or email not available for user ID:", userId);
+      return res.status(404).send({ message: "User not found or email unavailable." });
+    }
+    const recipientEmail = user.email; 
+
+    //Format body
+    let emailContent = `
+      <h1>Your Packing List for ${tripName || 'Your Trip'}</h1>
+      ${tripDates ? `<p>Dates: ${tripDates}</p>` : ''}
+      <p>Here's your organized packing list:</p>
+    `;
+
+    // Add Clothes
+    if (packingList.clothes && packingList.clothes.length > 0) {
+      const filteredClothes = packingList.clothes.filter(item => !item.isEmpty && item.quantity > 0);
+      if (filteredClothes.length > 0) {
+        emailContent += '<h2>Clothes</h2><ul>';
+        filteredClothes.forEach(item => {
+          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${item.isChecked ? '(Packed)' : '(Not Packed)'}</li>`;
+        });
+        emailContent += '</ul>';
+      }
+    }
+
+    // Add Footwear
+    if (packingList.footwear && packingList.footwear.length > 0) {
+      const filteredFootwear = packingList.footwear.filter(item => !item.isEmpty && item.quantity > 0);
+      if (filteredFootwear.length > 0) {
+        emailContent += '<h2>Footwear</h2><ul>';
+        filteredFootwear.forEach(item => {
+          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${item.isChecked ? '(Packed)' : '(Not Packed)'}</li>`;
+        });
+        emailContent += '</ul>';
+      }
+    }
+
+    // Add Accessories
+    if (packingList.accessories && packingList.accessories.length > 0) {
+      const filteredAccessories = packingList.accessories.filter(item => !item.isEmpty && item.quantity > 0);
+      if (filteredAccessories.length > 0) {
+        emailContent += '<h2>Accessories</h2><ul>';
+        filteredAccessories.forEach(item => {
+          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${item.isChecked ? '(Packed)' : '(Not Packed)'}</li>`;
+        });
+        emailContent += '</ul>';
+      }
+    }
+
+    // Add Personal Items
+    if (packingList.personal && packingList.personal.length > 0) {
+      const filteredPersonal = packingList.personal.filter(item => !item.isEmpty && item.quantity > 0);
+      if (filteredPersonal.length > 0) {
+        emailContent += '<h2>Personal Items</h2><ul>';
+        filteredPersonal.forEach(item => {
+          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${item.isChecked ? '(Packed)' : '(Not Packed)'}</li>`;
+        });
+        emailContent += '</ul>';
+      }
+    }
+
+    if (
+      (packingList.clothes && packingList.clothes.filter(item => !item.isEmpty && item.quantity > 0).length === 0) &&
+      (packingList.footwear && packingList.footwear.filter(item => !item.isEmpty && item.quantity > 0).length === 0) &&
+      (packingList.accessories && packingList.accessories.filter(item => !item.isEmpty && item.quantity > 0).length === 0) &&
+      (packingList.personal && packingList.personal.filter(item => !item.isEmpty && item.quantity > 0).length === 0)
+    ) {
+      emailContent += '<p>Your packing list is currently empty. Start adding items to prepare for your trip!</p>';
+    }
+
+    //Nodemailer transporter 
+    const transporter = nodemailer.createTransport({
+      service: 'gmail', 
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    //Define email options
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: recipientEmail, 
+      subject: `Your Packly Packing List for ${tripName || 'Your Trip'}`,
+      html: emailContent, 
+    };
+
+    //Send the email
+    await transporter.sendMail(mailOptions);
+    console.log(`Packing list email sent to ${recipientEmail} for trip: ${tripName}`);
+    res.status(200).send({ message: "Packing list sent to your email!" });
+
+  } catch (error) {
+    console.error("Error sending packing list email:", error);
+    res.status(500).send({ message: "Failed to send packing list email.", error: error.message });
+  }
+};
+
 
 module.exports = {
   getPackingLists,
