@@ -34,7 +34,7 @@ router.post(
   addItemToPackingList
 );
 
-router.post('send-packing-list', auth, sendPackingListEmail);
+router.post('/send-packing-list', auth, sendPackingListEmail);
 
 router.put("/:packingListId", auth, validatePackingListId, updatePackingList);
 router.delete('/:packingListId', auth, deletePackingList);
