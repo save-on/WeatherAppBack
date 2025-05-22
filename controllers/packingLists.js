@@ -349,5 +349,6 @@ module.exports = {
   deletePackingList,
   addItemToPackingList,
   removeItemFromPackingList,
+  sendPackingListEmail,
 };
 

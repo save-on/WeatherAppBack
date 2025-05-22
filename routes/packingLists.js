@@ -8,6 +8,7 @@ const {
   deletePackingList,
   addItemToPackingList,
   removeItemFromPackingList,
+  sendPackingListEmail,
 } = require("../controllers/packingLists");
 
 const auth = require("../middlewares/auth");
@@ -32,6 +33,8 @@ router.post(
   validatePackingListId,
   addItemToPackingList
 );
+
+router.post('send-packing-list', auth, sendPackingListEmail);
 
 router.put("/:packingListId", auth, validatePackingListId, updatePackingList);
 router.delete('/:packingListId', auth, deletePackingList);
