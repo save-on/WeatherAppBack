@@ -191,7 +191,7 @@ const addItemToPackingList = async (req, res, next) => {
 
     return res
       .status(201)
-      .send({ message: "Items added to packing list successfully." }); 
+      .send({ message: "Items added to packing list successfully." });
   } catch (err) {
     return next(err);
   }
@@ -209,14 +209,16 @@ const removeItemFromPackingList = async (req, res, next) => {
 
     if (authCheck.rows.length === 0) {
       return next(
-        new UnauthorizedError("You are not authorized to modify this packing list.")
+        new UnauthorizedError(
+          "You are not authorized to modify this packing list."
+        )
       );
     }
     const result = await pool.query(
       "DELETE FROM packing_list_items WHERE packing_list_id = $1 AND clothing_item_id = $2 RETURNING *;",
       [packingListId, itemId]
     );
-    
+
     if (result.rows.length === 0) {
       return next(
         new BadRequestError(
@@ -232,29 +234,51 @@ const removeItemFromPackingList = async (req, res, next) => {
 
 const sendPackingListEmail = async (req, res) => {
   console.log("Received request to send packing list email.");
-  const { packingList, tripName, tripDates } = req.body;
-  const userId = req.user._id; 
 
-  if (!packingList) {
-    return res.status(400).send({ message: "Packing list data is required." });
+  const { clothes, footwear, accessories, personal, tripName, tripDates } =
+    req.body;
+
+  const userId = req.user._id;
+
+  const packingList = {
+    clothes: clothes || [],
+    footwear: footwear || [],
+    accessories: accessories || [],
+    personal: personal || [],
+  };
+
+  if (!clothes && !footwear && !accessories && !personal) {
+    return res
+      .status(400)
+      .send({
+        message: "Packing list content (clothes, footwear, etc.) is required.",
+      });
   }
 
   try {
-    const user = await UserModel.findById(userId); 
-    if (!user || !user.email) {
-      console.error("User not found or email not available for user ID:", userId);
-      return res.status(404).send({ message: "User not found or email unavailable." });
+    const userResult = await pool.query(
+      "SELECT email FROM users WHERE id = $1",
+      [userId]
+    );
+
+    if (userResult.rows.length === 0 || !userResult.rows[0].email) {
+      console.error(
+        "User not found or email not available for user ID:",
+        userId
+      );
+      return res
+        .status(404)
+        .send({ message: "User not found or email unavailable." });
     }
-    const recipientEmail = user.email; 
+    const recipientEmail = userResult.rows[0].email; // Access email from the query result
 
-    //Format body
     let emailContent = `
-      <h1>Your Packing List for ${tripName || 'Your Trip'}</h1>
-      ${tripDates ? `<p>Dates: ${tripDates}</p>` : ''}
-      <p>Here's your organized packing list:</p>
-    `;
-
-    // Add Clothes
+            <h1>Your Packing List for ${tripName || "Your Trip"}</h1>
+            ${tripDates ? `<p>Dates: ${tripDates}</p>` : ""}
+            <p>Here's your organized packing list:</p>
+        `;
+        
+        // Add Clothes
     if (packingList.clothes && packingList.clothes.length > 0) {
       const filteredClothes = packingList.clothes.filter(item => !item.isEmpty && item.quantity > 0);
       if (filteredClothes.length > 0) {
@@ -303,42 +327,54 @@ const sendPackingListEmail = async (req, res) => {
     }
 
     if (
-      (packingList.clothes && packingList.clothes.filter(item => !item.isEmpty && item.quantity > 0).length === 0) &&
-      (packingList.footwear && packingList.footwear.filter(item => !item.isEmpty && item.quantity > 0).length === 0) &&
-      (packingList.accessories && packingList.accessories.filter(item => !item.isEmpty && item.quantity > 0).length === 0) &&
-      (packingList.personal && packingList.personal.filter(item => !item.isEmpty && item.quantity > 0).length === 0)
+      packingList.clothes &&
+      packingList.clothes.filter((item) => !item.isEmpty && item.quantity > 0)
+        .length === 0 &&
+      packingList.footwear &&
+      packingList.footwear.filter((item) => !item.isEmpty && item.quantity > 0)
+        .length === 0 &&
+      packingList.accessories &&
+      packingList.accessories.filter(
+        (item) => !item.isEmpty && item.quantity > 0
+      ).length === 0 &&
+      packingList.personal &&
+      packingList.personal.filter((item) => !item.isEmpty && item.quantity > 0)
+        .length === 0
     ) {
-      emailContent += '<p>Your packing list is currently empty. Start adding items to prepare for your trip!</p>';
+      emailContent +=
+        "<p>Your packing list is currently empty. Start adding items to prepare for your trip!</p>";
     }
 
-    //Nodemailer transporter 
     const transporter = nodemailer.createTransport({
-      service: 'gmail', 
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
     });
 
-    //Define email options
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: recipientEmail, 
-      subject: `Your Packly Packing List for ${tripName || 'Your Trip'}`,
-      html: emailContent, 
+      to: recipientEmail,
+      subject: `Your Packly Packing List for ${tripName || "Your Trip"}`,
+      html: emailContent,
     };
 
-    //Send the email
     await transporter.sendMail(mailOptions);
-    console.log(`Packing list email sent to ${recipientEmail} for trip: ${tripName}`);
+    console.log(
+      `Packing list email sent to ${recipientEmail} for trip: ${tripName}`
+    );
     res.status(200).send({ message: "Packing list sent to your email!" });
-
   } catch (error) {
     console.error("Error sending packing list email:", error);
-    res.status(500).send({ message: "Failed to send packing list email.", error: error.message });
+    res
+      .status(500)
+      .send({
+        message: "Failed to send packing list email.",
+        error: error.message,
+      });
   }
 };
-
 
 module.exports = {
   getPackingLists,
@@ -351,4 +387,3 @@ module.exports = {
   removeItemFromPackingList,
   sendPackingListEmail,
 };
-
