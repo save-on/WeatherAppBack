@@ -3,7 +3,6 @@ const router = express.Router();
 const auth = require("../middlewares/auth");
 const tripsController = require("../controllers/trips");
 
+router.post("/", auth, tripsController.createTripWithPackingList);
 
-router.post("/", auth, tripsController, createTripWithPackingList);
-
-module.export = router;
+module.exports = router;
