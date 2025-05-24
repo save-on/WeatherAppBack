@@ -32,7 +32,7 @@ app.use("/trips", tripRoutes);
 app.use("/", mainRouter);
 
 //error handlers
-app.use(errors());
+// app.use(errors());
 app.use(errorHandler);
 // app.use("/uploads", express.static("uploads"));
 

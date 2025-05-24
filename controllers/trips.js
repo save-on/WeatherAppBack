@@ -21,7 +21,7 @@ const createTripWithPackingList = async (req, res, next) => {
     //try block for dates
     try {
         const {startDate: reqStartDate, endDate: reqEndDate} = req.body;
-        tripDateRange= `[${new Date(reqStartDate).toISOString()}, ${new Date(reqendDate).toISOString()}]`;
+        tripDateRange= `[${new Date(reqStartDate).toISOString()}, ${new Date(reqEndDate).toISOString()}]`;
     } catch (parseError) {
         console.error("Error parsing dates: ", parseError);
         return next(new BadRequestError("Invalid date format provided for trip dates."));
