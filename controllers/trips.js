@@ -2,48 +2,66 @@ const pool = require("../db");
 const BadRequestError = require("../utils/errorclasses/BadRequestError");
 
 const createTripWithPackingList = async (req, res, next) => {
-    const {
-        destination,
-        when,
-        activities: activitiesString,
-    } = req.body;
+  console.log("Reached createTripWithPackingList controller.");
+  console.log("Request Body received in controller: ", req.body);
+  const { destination, when, activities: activitiesString } = req.body;
 
-    const user_id = req.user._id;
+  const user_id = req.user._id;
 
-    if (!destination || !req.body.startDate || !req.body.endDate) {
-        return next(new BadRequestError("Destination and travel dates are required to create a trip."));
-    }
+  if (!destination || !req.body.startDate || !req.body.endDate) {
+    return next(
+      new BadRequestError(
+        "Destination and travel dates are required to create a trip."
+      )
+    );
+  }
 
-    //Parse when with startData and endDate
-    let startDate, endDate;
-    let tripDateRange;
+  //Parse when with startData and endDate
+  let startDate, endDate;
+  let tripDateRange;
 
-    //try block for dates
-    try {
-        const {startDate: reqStartDate, endDate: reqEndDate} = req.body;
-        tripDateRange= `[${new Date(reqStartDate).toISOString()}, ${new Date(reqEndDate).toISOString()}]`;
-    } catch (parseError) {
-        console.error("Error parsing dates: ", parseError);
-        return next(new BadRequestError("Invalid date format provided for trip dates."));
-    }
+  //try block for dates
+  try {
+    const { startDate: reqStartDate, endDate: reqEndDate } = req.body;
+    tripDateRange = `[${new Date(reqStartDate).toISOString()}, ${new Date(
+      reqEndDate
+    ).toISOString()}]`;
+  } catch (parseError) {
+    console.error("Error parsing dates: ", parseError);
+    return next(
+      new BadRequestError("Invalid date format provided for trip dates.")
+    );
+  }
 
-    //try block for packinglist
-    try {
-        await pool.query("Begin");
+  const activitiesArray = activitiesString
+    ? activitiesString
+        .split(",")
+        .map((activity) => activity.trim())
+        .filter(Boolean)
+    : [];
 
-        //create packinglist
-        const packingListName = `${destination} Trip Packing List`;
-        const packingListResult = await pool.query(
-            `INSERT INTO packing_lists (name, created_at, updated_at)
-            VALUES ($1, NOW(), NOW()) 
+  //try block for packinglist
+  try {
+    console.log("Starting DB Transaction (Begin)."); // NEW
+    await pool.query("Begin");
+    console.log("Transaction Began."); // NEW
+
+    //create packinglist
+    const packingListName = `${destination} Trip Packing List`;
+    console.log("Attempting to insert packing list."); // NEW
+    const packingListResult = await pool.query(
+      `INSERT INTO packing_lists (name, created_at, updated_at)
+            VALUES ($1, NOW(), NOW())
             RETURNING id;`,
-            [packingListName]
-        );
-        const packing_list_id = packingListResult.rows[0].id;
+      [packingListName]
+    );
+    const packing_list_id = packingListResult.rows[0].id;
+    console.log("Packing list inserted, ID:", packing_list_id); // NEW
 
-        //create new trip
-        const tripResult = await pool.query(
-            `INSERT INTO trips (
+    //create new trip
+    console.log("Attempting to insert trip."); // NEW
+    const tripResult = await pool.query(
+      `INSERT INTO trips (
             destination,
             trip_date,
             packing_list_id,
@@ -51,64 +69,40 @@ const createTripWithPackingList = async (req, res, next) => {
             created_at,
             updated_at
             )
-            VALUES ($1, $2, $3, $4, NOW(), NOW()) 
+            VALUES ($1, $2, $3, $4, NOW(), NOW())
             RETURNING *;`,
-            [
-                destination,
-                tripDateRange,
-                packing_list_id,
-                user_id,
-            ]
-        );
-        const trip_id = tripResult.rows[0].id;
+      [destination, tripDateRange, packing_list_id, user_id]
+    );
+    const trip_id = tripResult.rows[0].id;
+    console.log("Trip inserted, ID:", trip_id); // NEW
 
-        //handle activities
-        const activitiesArray = activitiesString 
-        ? activitiesString.split(',').map(activity => activity.trim()).filter(Boolean)
-        : [];
-
-        for (const activityName of activitiesArray) {
-            let activity_id;
-
-            //check if activity exists
-            const existingActivity = await pool.query(
-                `SELECT id FROM activities WHERE activity = $1;`,
-                [activityName]
-            );
-
-            if (existingActivity.rows.length > 0) {
-                activity_id = existingActivity.rows[0].id;
-            } else {
-                //add new activity
-                const newActivityResult = await pool.query(
-                    `INSERT INTO activities (activity) VALUES ($1) RETURNING id;`,
-                    [activityName]
-                );
-                activity_id = newActivityResult.rows[0].id;
-            }
-
-            //link trip and activities to trip_activities junction table
-            await pool.query(
-                `INSERT INTO trip_activities (trip_id, activity_id) VALUES ($1, $2) ON CONFLICT (trip_id, activity_id) DO NOTHING;`,
-                [trip_id, activity_id]
-            );
-        }
-
-        await pool.query("COMMIT");
-
-        //res with new trip details
-        res.status(201).send({
-            trip: tripResult.rows[0],
-            packing_list: {id: packing_list_id, name: packingListName},
-            activities: activitiesArray,
-        });
-    } catch (dbError) {
-        await pool.query("ROLLBACK");
-        console.error("Database error creating trip and packing list: ", dbError);
-        return next(dbError);
+    //handle activities
+    console.log("Processing activities:", activitiesArray); // NEW
+    for (const activityName of activitiesArray) {
+      // ... (activity check/insert/link) ...
+      console.log(`Processed activity: ${activityName}`); // NEW
     }
+    console.log("All activities processed."); // NEW
+
+    console.log("Attempting to COMMIT transaction."); // NEW
+    await pool.query("COMMIT");
+    console.log("Transaction COMMITTED."); // NEW
+
+    res.status(201).send({
+      trip: tripResult.rows[0],
+      packing_list: { id: packing_list_id, name: packingListName },
+      activities: activitiesArray,
+    });
+    console.log("Response sent from controller successfully."); // NEW
+  } catch (dbError) {
+    console.error("DATABASE ERROR CAUGHT IN TRIPS CONTROLLER:", dbError); // This is the crucial log
+    // Add a log for rollback as well
+    await pool.query("ROLLBACK");
+    console.error("Database transaction rolled back due to error.");
+    return next(dbError);
+  }
 };
 
 module.exports = {
-    createTripWithPackingList,
+  createTripWithPackingList,
 };

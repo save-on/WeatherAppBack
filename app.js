@@ -21,20 +21,38 @@ const startApp = () => {
 
 startApp(); // Could be fixed later
 
+app.use((req, res, next) => {
+  console.log(`Incoming Request: ${req.method} ${req.url}`);
+    next();
+})
 app.use(cors());
+console.log("Middleware Regiestered: cors");
+
 app.use(express.json({ limit: "100mb" }));
+console.log("Middleware registered: express.json");
+
 app.use(express.urlencoded({ extended: true, limit: "100mb" }));
+console.log("Middleware registered: express.urlncoded");
 
 //routers
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
+console.log("Middleware Registered: static /uploads public")
 app.use("/packing-lists", packingLists);
+console.log("Middleware Registered: /packing-lists router")
 app.use("/trips", tripRoutes);
+console.log("Middleware Registered: /trips router")
 app.use("/", mainRouter);
+console.log("Middleware Registered: / main router")
 
 //error handlers
-// app.use(errors());
+//app.use(errors());
 app.use(errorHandler);
-// app.use("/uploads", express.static("uploads"));
+console.log("Middleware Registered: errorHandler")
+
+app.use((req, res, next) => {
+  console.warn(`404 Not Found: ${req.method} ${req.url}`);
+  res.status(404).json({ message: `Cannot ${req.method} ${req.url}. Route not found.`})
+})
 
 const shutdownHandler = async () => {
   console.log("Closing database connection pool...");
