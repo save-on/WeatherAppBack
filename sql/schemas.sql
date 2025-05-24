@@ -31,11 +31,8 @@ CREATE TRIGGER update_packing_lists_updated_at
 	EXECUTE FUNCTION 
 	update_updated_at();
 
-CREATE TABLE activities (
-	id SERIAL PRIMARY KEY,
-	activity VARCHAR(30) NOT NULL
-);
 
+-- CREATE TRIPS TABLE TO SAVE THE WHOLE TRIP
 CREATE TABLE trips (
 	id SERIAL PRIMARY KEY,
 	destination VARCHAR(30) NOT NULL,
@@ -64,6 +61,12 @@ CREATE TABLE packing_lists_items (
 	quantity INT NULL,
 	FOREIGN KEY (packing_list_id) REFERENCES packing_lists (id) ON DELETE SET NULL,
 	FOREIGN KEY (activity_id) REFERENCES activities (id) ON DELETE CASCADE
+);
+
+-- CERATE ACTIVITIES TABLE
+CREATE TABLE activities (
+	id SERIAL PRIMARY KEY,
+	activity VARCHAR(30) NOT NULL
 );
 
 -- Junction table
