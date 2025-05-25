@@ -103,6 +103,27 @@ const createTripWithPackingList = async (req, res, next) => {
   }
 };
 
+const getTrips = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+
+    //look for trips for the user
+    const result = await pool.query(
+      `SELECT id, destination, trip_date, packing_list_id, user_id, created_at, updated_at 
+            FROM trips 
+            WHERE user_id = $1 
+            ORDER BY created_at DESC;`,
+      [userId]
+    );
+
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error fetching trips: ", error);
+    next(error);
+  }
+};
+
 module.exports = {
-  createTripWithPackingList,
+  createTripWithPackingList, 
+  getTrips
 };

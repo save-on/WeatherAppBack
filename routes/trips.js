@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middlewares/auth");
-const tripsController = require("../controllers/trips");
+const { createTripWithPackingList, getTrips } = require("../controllers/trips");
 
-router.post("/", auth, tripsController.createTripWithPackingList);
+router.post("/", auth, createTripWithPackingList);
+
+router.get("/", auth, getTrips);
 
 module.exports = router;
