@@ -4,8 +4,6 @@ const UnauthorizedError = require("../utils/errorclasses/UnauthorizedError");
 const NotFoundError = require("../utils/errorclasses/NotFoundError");
 
 const createTripWithPackingList = async (req, res, next) => {
-  console.log("Reached createTripWithPackingList controller.");
-  console.log("Request Body received in controller: ", req.body);
   const { destination, when, activities: activitiesString } = req.body;
 
   const user_id = req.user._id;
@@ -76,12 +74,11 @@ const createTripWithPackingList = async (req, res, next) => {
       [destination, tripDateRange, packing_list_id, user_id]
     );
     const trip_id = tripResult.rows[0].id;
-    console.log("Trip inserted, ID:", trip_id); // NEW
+    console.log("Trip inserted, ID:", trip_id);
 
     //handle activities
-    console.log("Processing activities:", activitiesArray); // NEW
+    console.log("Processing activities:", activitiesArray);
     for (const activityName of activitiesArray) {
-      // ... (activity check/insert/link) ...
       let activityId;
 
       // 1. Check if activity already exists in 'activities' table
@@ -101,7 +98,7 @@ const createTripWithPackingList = async (req, res, next) => {
           `INSERT INTO activities (activity) VALUES ($1) RETURNING id;`,
           [activityName]
         );
-        activityId = newActivityResult.rows[0].id; // Get ID of the newly inserted activity
+        activityId = newActivityResult.rows[0].id;
         console.log(
           `New activity "${activityName}" inserted with ID: ${activityId}`
         );
@@ -110,32 +107,31 @@ const createTripWithPackingList = async (req, res, next) => {
       // 3. Link activity to the trip in 'trip_activities' junction table
       await pool.query(
         `INSERT INTO trip_activities (trip_id, activity_id) VALUES ($1, $2)
-         ON CONFLICT (trip_id, activity_id) DO NOTHING;`, // Prevents duplicate entries if for some reason a trip-activity pair is inserted twice
+         ON CONFLICT (trip_id, activity_id) DO NOTHING;`,
         [trip_id, activityId]
       );
       console.log(
         `Linked trip_id ${trip_id} with activity_id ${activityId} in trip_activities.`
       );
-      // --- END ADDED CODE BLOCK ---
 
-      console.log(`Processed activity: ${activityName}`); // NEW
-      console.log(`Processed activity: ${activityName}`); // NEW
+      console.log(`Processed activity: ${activityName}`);
+      console.log(`Processed activity: ${activityName}`);
     }
-    console.log("All activities processed."); // NEW
+    console.log("All activities processed.");
 
-    console.log("Attempting to COMMIT transaction."); // NEW
+    console.log("Attempting to COMMIT transaction.");
     await pool.query("COMMIT");
-    console.log("Transaction COMMITTED."); // NEW
+    console.log("Transaction COMMITTED.");
 
     res.status(201).send({
       trip: tripResult.rows[0],
       packing_list: { id: packing_list_id, name: packingListName },
       activities: activitiesArray,
     });
-    console.log("Response sent from controller successfully."); // NEW
+    console.log("Response sent from controller successfully.");
   } catch (dbError) {
-    console.error("DATABASE ERROR CAUGHT IN TRIPS CONTROLLER:", dbError); // This is the crucial log
-    // Add a log for rollback as well
+    console.error("DATABASE ERROR CAUGHT IN TRIPS CONTROLLER:", dbError);
+
     await pool.query("ROLLBACK");
     console.error("Database transaction rolled back due to error.");
     return next(dbError);
@@ -163,10 +159,6 @@ const getTrips = async (req, res, next) => {
 };
 
 const getTripById = async (req, res, next) => {
-  console.log("-> Entering getTripById controller.");
-  console.log("-> getTripById received req.params:", req.params);
-  console.log("-> getTripById received req.user:", req.user);
-
   try {
     const { tripId } = req.params;
     const userId = req.user._id;
@@ -208,20 +200,15 @@ const getTripById = async (req, res, next) => {
 };
 
 const deleteTripById = async (req, res) => {
-  console.log("-> Entering deleteTripById controller.");
   const { tripId } = req.params;
-  const userId = req.user._id; // Assuming req.user._id is populated by your auth middleware
+  const userId = req.user._id;
 
-  console.log("-> deleteTripById received req.params:", { tripId });
-  console.log("-> deleteTripById received req.user:", { _id: userId });
-
-  let client; // Declare client outside try-block for finally access
+  let client;
   try {
     if (!tripId) {
       return res.status(400).send({ message: "Trip ID is required." });
     }
     if (!userId) {
-      // This should ideally be caught by auth middleware, but good for defensive coding
       return res.status(401).send({ message: "User not authenticated." });
     }
 
@@ -229,7 +216,7 @@ const deleteTripById = async (req, res) => {
     await client.query("BEGIN"); // Start a transaction
 
     // 1. Get the packing_list_id associated with the trip
-    // This is the query that was previously causing the "column does not exist" error
+
     const getPackingListIdQuery =
       "SELECT packing_list_id FROM trips WHERE id = $1 AND user_id = $2;";
     const tripResult = await client.query(getPackingListIdQuery, [
@@ -238,7 +225,7 @@ const deleteTripById = async (req, res) => {
     ]);
 
     if (tripResult.rows.length === 0) {
-      await client.query("ROLLBACK"); // Rollback if trip not found
+      await client.query("ROLLBACK");
       return res
         .status(404)
         .send({ message: "Trip not found or does not belong to user." });
@@ -250,14 +237,12 @@ const deleteTripById = async (req, res) => {
     );
 
     // 2. Delete entries in 'trip_activities' related to this trip
-    // Assuming 'trip_activities' table has a 'trip_id' column
     const deleteTripActivitiesQuery =
       "DELETE FROM trip_activities WHERE trip_id = $1;";
     await client.query(deleteTripActivitiesQuery, [tripId]);
     console.log(`-> Deleted trip_activities for tripId: ${tripId}`);
 
     // 3. Delete items from 'packing_list_items' related to this packing list
-    // Assuming 'packing_list_items' table has a 'packing_list_id' column
     const deletePackingListItemsQuery =
       "DELETE FROM packing_list_items WHERE packing_list_id = $1;";
     await client.query(deletePackingListItemsQuery, [packingListId]);
@@ -266,7 +251,6 @@ const deleteTripById = async (req, res) => {
     );
 
     // 4. Delete the packing list itself
-    // Assuming 'packing_lists' table has an 'id' column
     const deletePackingListQuery = "DELETE FROM packing_lists WHERE id = $1;";
     await client.query(deletePackingListQuery, [packingListId]);
     console.log(`-> Deleted packing_list with ID: ${packingListId}`);
@@ -276,7 +260,7 @@ const deleteTripById = async (req, res) => {
     await client.query(deleteTripQuery, [tripId, userId]);
     console.log(`-> Deleted trip with ID: ${tripId}`);
 
-    await client.query("COMMIT"); // Commit the transaction
+    await client.query("COMMIT");
     console.log(
       `-> Successfully completed transaction for deleting trip ${tripId}.`
     );
@@ -285,11 +269,10 @@ const deleteTripById = async (req, res) => {
       .send({ message: "Trip and associated data deleted successfully." });
   } catch (error) {
     if (client) {
-      await client.query("ROLLBACK"); // Rollback the transaction on error
+      await client.query("ROLLBACK");
       console.log(`-> Transaction rolled back for trip ${tripId}.`);
     }
     console.error("Error deleting trip by ID: ", error);
-    // Determine the error message to send back to the frontend
     let errorMessage = "Failed to delete trip.";
     if (
       error.message &&
@@ -298,14 +281,245 @@ const deleteTripById = async (req, res) => {
       errorMessage =
         "Database schema error: 'packing_list_id' column missing. Please check your database setup.";
     } else if (error.message) {
-      errorMessage = error.message; // Use the raw error message if available
+      errorMessage = error.message;
     }
 
     return res.status(500).send({ message: errorMessage });
   } finally {
     if (client) {
-      client.release(); // Release the client back to the pool
+      client.release();
       console.log("-> Database client released.");
+    }
+  }
+};
+
+const updateTrip = async (req, res, next) => {
+  console.log("-> Entering updateTrip controller.");
+  console.log("-> updateTrip received req.params:", req.params);
+  console.log("-> updateTrip received req.body:", req.body);
+
+  const { tripId } = req.params;
+  const userId = req.ueser._id;
+
+  const { destination, startDate, endDate, activities, packingList } = req.body;
+
+  let client;
+
+  try {
+    if (!tripId) {
+      return next(new BadRequestError("Trip ID is required for update."));
+    }
+    if (!userId) {
+      return next(new BadRequestError("User not authenticated."));
+    }
+
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    //1. Verify trip existance and ownership, and get packing_list_id
+    const tripCheckResult = await client.query(
+      `SELECT packing_list_id FROM trips WHERE id = $1 AND user_id = $2;`,
+      [tripId, userId]
+    );
+    if (tripCheckResult.rows.lenghth === 0) {
+      await client.query("ROLLBACK");
+      return next(
+        new NotFoundError("Trip not found or does not belong to user.")
+      );
+    }
+    const packing_list_id = tripCheckResult.rows[0].packing_list_id;
+
+    //2. update 'trips' table
+    let updateTripQuery = `UPDATE trips SET updated_at = NOW()`;
+    const updateTripParams = [];
+    let paramIndex = 1;
+
+    if (destination !== undefined) {
+      updateTripQuery += `, destination = ${paramIndex}`;
+      updateTripParams.push(destination);
+      paramIndex++;
+    }
+
+    let tripDateRange;
+    if (startDate !== undefined && endDate !== undefined) {
+      try {
+        tripDateRange = `[${new Date(startDate).toISOString()}, ${new Date(
+          endDate
+        ).toISOString()}]`;
+        updateTripQuery += `, trip_date = $${paramIndex}`;
+        updateTripParams.push(tripDateRange);
+        paramIndex++;
+      } catch (parseError) {
+        console.error("Error parsing dates for update: ", parseError);
+        await client.query("ROLLBACK");
+        return next(
+          new BadRequestError("Invalid date format provided for trip dates.")
+        );
+      }
+    }
+
+    updateTripQuery += ` WHERE id = ${paramIndex} AND user_id = ${
+      paramIndex + 1
+    } RETURNING *;`;
+    updateTripParams.push(tripId, userId);
+
+    const updatedTripResult = await client.query(
+      updateTripQuery,
+      updateTripParams
+    );
+    console.log("--> Trips table updated for trip ID: ", tripId);
+
+    //3. handle activities update, deleting all existing and re-insert new activities
+    //   deleting existing activities for this trip from junction table as well
+    await client.query(`DELETE FROM trip_activities WHERE trip_id = $1;`, [
+      tripId,
+    ]);
+    console.log("--> Deleted existing trip_activities for trip ID: ", tripId);
+
+    if (activities && activities.length === 0) {
+      for (const activityName of activities) {
+        let activityId;
+        const existingActivity = await client.query(
+          `SELECT id FROM activities WHERE activity = $1;`,
+          [activityName]
+        );
+
+        if (existingActivity.rows.length > 0) {
+          activityId = existingActivity.rows[0].id;
+        } else {
+          //insert new activity
+          const newActivityResult = await client.query(
+            `INSERT INTO activities (activity) VALUES ($1) RETURNING id;`,
+            [activityName]
+          );
+          activityId = newActivityResult.rows[0].id;
+        }
+        // link activity to trip in trip_activities junction table
+        await client.query(
+          `INSERT INTO trip_activities (trip_id, activity_id) VALUES ($1, $2);`,
+          [tripId, activityId]
+        );
+      }
+      console.log("--> Re-inserted new trip_activities for trip ID: ", tripId);
+    } else {
+      console.log(
+        "--> No activities provided for update or activities array is empty."
+      );
+    }
+
+    //4. handle packing List Items Update, deleting all existing and re-insert new ones
+    await client.query(
+      `DELETE FROM packing_lists_items WHERE packing_list_id = $1;`,
+      [packing_list_id]
+    );
+    console.log(
+      "--> Deleted existing packing_list_items for packing list ID: ",
+      packing_list_id
+    );
+
+    if (packingList) {
+      const categories = Object.keys(packingList); // ['clothes', 'footwear', ...]
+      for (const category of categories) {
+        if (
+          Array.isArray(packingList[category]) &&
+          packingList[category].length > 0
+        ) {
+          for (const item of packingList[category]) {
+            // Note: packing_lists_items schema has activity_id INT NULL,
+            // but for general packing items, it will be NULL.
+            // Adjust if you store specific activity-related items here.
+            await client.query(
+              `INSERT INTO packing_lists_items (packing_list_id, name, category, quantity)
+               VALUES ($1, $2, $3, $4);`, // isChecked is not in schema - adjust if needed
+              [packing_list_id, item.name, category, item.quantity]
+              // If you need isChecked, ensure your schema includes it for packing_lists_items:
+              // `INSERT INTO packing_lists_items (packing_list_id, name, category, quantity, is_checked) VALUES ($1, $2, $3, $4, $5);`
+              // Then add item.isChecked to the array of values.
+            );
+          }
+        }
+      }
+      console.log(
+        "-> Re-inserted new packing_list_items for packing list ID:",
+        packing_list_id
+      );
+    } else {
+      console.log("-> No packingList provided for update.");
+    }
+
+    await client.query("COMMIT");
+    console.log("--> Transaction COMMITTED for updateTrip.");
+
+    const fullUpdatedTrip = await client.query(
+      `SELECT
+          t.id,
+          t.destination,
+          t.trip_date,
+          t.packing_list_id,
+          t.user_id,
+          t.created_at,
+          t.updated_at,
+          COALESCE(ARRAY_AGG(a.activity) FILTER (WHERE a.activity IS NOT NULL), '{}') AS activities
+       FROM
+          trips t
+       LEFT JOIN
+          trip_activities ta ON t.id = ta.trip_id
+       LEFT JOIN
+          activities a ON ta.activity_id = a.id
+       WHERE
+          t.id = $1 AND t.user_id = $2
+       GROUP BY
+          t.id, t.destination, t.trip_date, t.packing_list_id, t.user_id, t.created_at, t.updated_at;`,
+      [tripId, userId]
+    );
+
+    const packingListItems = await client.query(
+      `SELECT id, name, category, quantity FROM packing_lists_items WHERE packing_list_id = $1;`,
+      [packing_list_id]
+    );
+
+    const formattedPackingList = {
+      clothes: packingListItems.rows.filter(
+        (item) => item.category === "clothes"
+      ),
+      footwear: packingListItems.rows.filter(
+        (item) => item.category === "footwear"
+      ),
+      accessories: packingListItems.rows.filter(
+        (item) => item.category === "accessories"
+      ),
+      personal_items: packingListItems.rows.filter(
+        (item) => item.category === "personal_items"
+      ),
+    };
+
+    if (fullUpdatedTrip.rows.length === 0) {
+      return res
+        .status(500)
+        .json({ message: "Failed to retrieve updated tip data." });
+    }
+
+    res.status(200).json({
+      message: "Trip updated successfully",
+      trip: {
+        ...fullUpdatedTrip.rows[0],
+        packingList: formattedPackingList,
+      },
+    });
+  } catch (error) {
+    if (client) {
+      await client.query("ROLLBACK");
+      console.error(
+        "--> Transction rolled back for updateTrip due to error: ",
+        error
+      );
+    }
+    console.error("Error updating trip by ID: ", error);
+    next(error);
+  } finally {
+    if (client) {
+      client.release();
+      console.log("--> Database client released for updateTrip.");
     }
   }
 };
@@ -315,4 +529,5 @@ module.exports = {
   getTrips,
   getTripById,
   deleteTripById,
+  updateTrip,
 };
