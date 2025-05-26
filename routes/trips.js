@@ -12,7 +12,8 @@ router.post("/", auth, createTripWithPackingList);
 
 //router.get("/", auth, getTrips);
 router.get("/:tripId", auth, getTripById);
+router.get("/", auth, getTrips);
 
-router.delete(".tripId", auth, deleteTripById);
+router.delete("/:tripId", auth, deleteTripById);
 
 module.exports = router;

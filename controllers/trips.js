@@ -154,79 +154,106 @@ const getTripById = async (req, res, next) => {
   }
 };
 
-const deleteTripById = async (req, res, next) => {
+const deleteTripById = async (req, res) => {
   console.log("-> Entering deleteTripById controller.");
-  console.log("-> deleteTripById received req.params:", req.params);
-  console.log("-> deleteTripById received req.user:", req.user);
+  const { tripId } = req.params;
+  const userId = req.user._id; // Assuming req.user._id is populated by your auth middleware
 
-  const client = await pool.query.connect();
+  console.log("-> deleteTripById received req.params:", { tripId });
+  console.log("-> deleteTripById received req.user:", { _id: userId });
+
+  let client; // Declare client outside try-block for finally access
   try {
-    const { tripId } = req.params;
-    const userId = req.user._id;
-
     if (!tripId) {
-      return next(new BadRequestError("Trip ID is required for deletion."));
+      return res.status(400).send({ message: "Trip ID is required." });
     }
     if (!userId) {
-      return next(new UnauthorizedError("User not authenticated."));
+      // This should ideally be caught by auth middleware, but good for defensive coding
+      return res.status(401).send({ message: "User not authenticated." });
     }
 
-    await client.query("BEGIN");
+    client = await pool.connect(); // Acquire a client from the pool
+    await client.query("BEGIN"); // Start a transaction
 
-    //1. Get the packing_list_id from the trip
-    const tripResult = await client.query(
-      `SELECT packing_list_id FROM trips WHERE id = $1 AND user_id = $2;`,
-      [tripId, userId]
-    );
+    // 1. Get the packing_list_id associated with the trip
+    // This is the query that was previously causing the "column does not exist" error
+    const getPackingListIdQuery =
+      "SELECT packing_list_id FROM trips WHERE id = $1 AND user_id = $2;";
+    const tripResult = await client.query(getPackingListIdQuery, [
+      tripId,
+      userId,
+    ]);
 
     if (tripResult.rows.length === 0) {
-      await client.query("ROLLBACK");
-      return next(
-        new NotFoundError(
-          "Trip not found or you don't have permission to delete it."
-        )
-      );
+      await client.query("ROLLBACK"); // Rollback if trip not found
+      return res
+        .status(404)
+        .send({ message: "Trip not found or does not belong to user." });
     }
+
     const packingListId = tripResult.rows[0].packing_list_id;
-
-    //2. Delete related activities
-    await client.query(`DELETE FROM activities WHERE packing_list_id = $1;`, [
-      packingListId,
-    ]);
-    console.log(`Deleted activities from packing list ID: ${packingListId}`);
-
-    //3. Delete packing list
-    await client.query(`DELETE FROM packing_lists WHERE id = $1;`, [
-      packingListId,
-    ]);
-    console.log(`Deleted packing list ID: ${packingListId}`);
-
-    //4. Delete the trip itself
-    const deleteTripResult = await client.query(
-      `DELETE FROM trips WHERE id = $1 AND user_id = $2 RETURNING id;`,
-      [tripId, userId]
+    console.log(
+      `-> Found packing_list_id: ${packingListId} for tripId: ${tripId}`
     );
-    console.log(`Delted trip ID: ${tripId}`);
 
-    if (deleteTripResult.rows.length == 0) {
-      await client.query("ROLLBACK");
-      return next(
-        new NotFoundError(
-          "Trip not found or you don't have permission to delete it."
-        )
-      );
-    }
-    await client.query("COMMIT");
-    console.log(`Transaction COMMITTED for deleting trip ${tripId}`);
-    res
+    // 2. Delete entries in 'trip_activities' related to this trip
+    // Assuming 'trip_activities' table has a 'trip_id' column
+    const deleteTripActivitiesQuery =
+      "DELETE FROM trip_activities WHERE trip_id = $1;";
+    await client.query(deleteTripActivitiesQuery, [tripId]);
+    console.log(`-> Deleted trip_activities for tripId: ${tripId}`);
+
+    // 3. Delete items from 'packing_list_items' related to this packing list
+    // Assuming 'packing_list_items' table has a 'packing_list_id' column
+    const deletePackingListItemsQuery =
+      "DELETE FROM packing_list_items WHERE packing_list_id = $1;";
+    await client.query(deletePackingListItemsQuery, [packingListId]);
+    console.log(
+      `-> Deleted packing_list_items for packing_list_id: ${packingListId}`
+    );
+
+    // 4. Delete the packing list itself
+    // Assuming 'packing_lists' table has an 'id' column
+    const deletePackingListQuery = "DELETE FROM packing_lists WHERE id = $1;";
+    await client.query(deletePackingListQuery, [packingListId]);
+    console.log(`-> Deleted packing_list with ID: ${packingListId}`);
+
+    // 5. Finally, delete the trip itself
+    const deleteTripQuery = "DELETE FROM trips WHERE id = $1 AND user_id = $2;";
+    await client.query(deleteTripQuery, [tripId, userId]);
+    console.log(`-> Deleted trip with ID: ${tripId}`);
+
+    await client.query("COMMIT"); // Commit the transaction
+    console.log(
+      `-> Successfully completed transaction for deleting trip ${tripId}.`
+    );
+    return res
       .status(200)
-      .json({ message: "Trip and associated data deleted successfully." });
+      .send({ message: "Trip and associated data deleted successfully." });
   } catch (error) {
-    await client.query("ROLLBACK");
+    if (client) {
+      await client.query("ROLLBACK"); // Rollback the transaction on error
+      console.log(`-> Transaction rolled back for trip ${tripId}.`);
+    }
     console.error("Error deleting trip by ID: ", error);
-    next(error);
+    // Determine the error message to send back to the frontend
+    let errorMessage = "Failed to delete trip.";
+    if (
+      error.message &&
+      error.message.includes('column "packing_list_id" does not exist')
+    ) {
+      errorMessage =
+        "Database schema error: 'packing_list_id' column missing. Please check your database setup.";
+    } else if (error.message) {
+      errorMessage = error.message; // Use the raw error message if available
+    }
+
+    return res.status(500).send({ message: errorMessage });
   } finally {
-    client.release();
+    if (client) {
+      client.release(); // Release the client back to the pool
+      console.log("-> Database client released.");
+    }
   }
 };
 
