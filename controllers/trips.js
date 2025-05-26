@@ -299,7 +299,7 @@ const updateTrip = async (req, res, next) => {
   console.log("-> updateTrip received req.body:", req.body);
 
   const { tripId } = req.params;
-  const userId = req.ueser._id;
+  const userId = req.user._id;
 
   const { destination, startDate, endDate, activities, packingList } = req.body;
 
@@ -335,7 +335,7 @@ const updateTrip = async (req, res, next) => {
     let paramIndex = 1;
 
     if (destination !== undefined) {
-      updateTripQuery += `, destination = ${paramIndex}`;
+      updateTripQuery += `, destination = $${paramIndex}`;
       updateTripParams.push(destination);
       paramIndex++;
     }
@@ -358,7 +358,7 @@ const updateTrip = async (req, res, next) => {
       }
     }
 
-    updateTripQuery += ` WHERE id = ${paramIndex} AND user_id = ${
+    updateTripQuery += ` WHERE id = $${paramIndex} AND user_id = ${
       paramIndex + 1
     } RETURNING *;`;
     updateTripParams.push(tripId, userId);
@@ -409,7 +409,7 @@ const updateTrip = async (req, res, next) => {
 
     //4. handle packing List Items Update, deleting all existing and re-insert new ones
     await client.query(
-      `DELETE FROM packing_lists_items WHERE packing_list_id = $1;`,
+      `DELETE FROM packing_list_items WHERE packing_list_id = $1;`,
       [packing_list_id]
     );
     console.log(
@@ -429,12 +429,14 @@ const updateTrip = async (req, res, next) => {
             // but for general packing items, it will be NULL.
             // Adjust if you store specific activity-related items here.
             await client.query(
-              `INSERT INTO packing_lists_items (packing_list_id, name, category, quantity)
-               VALUES ($1, $2, $3, $4);`, // isChecked is not in schema - adjust if needed
-              [packing_list_id, item.name, category, item.quantity]
-              // If you need isChecked, ensure your schema includes it for packing_lists_items:
-              // `INSERT INTO packing_lists_items (packing_list_id, name, category, quantity, is_checked) VALUES ($1, $2, $3, $4, $5);`
-              // Then add item.isChecked to the array of values.
+              `INSERT INTO packing_list_items (packing_list_id, name, category, quantity, is_checked) VALUES ($1, $2, $3, $4, $5);`,
+              [
+                packing_list_id,
+                item.name,
+                category,
+                item.quantity,
+                item.isChecked || false,
+              ]
             );
           }
         }
@@ -474,7 +476,7 @@ const updateTrip = async (req, res, next) => {
     );
 
     const packingListItems = await client.query(
-      `SELECT id, name, category, quantity FROM packing_lists_items WHERE packing_list_id = $1;`,
+      `SELECT id, name, category, quantity, is_checked FROM packing_list_items WHERE packing_list_id = $1;`,
       [packing_list_id]
     );
 
@@ -496,7 +498,7 @@ const updateTrip = async (req, res, next) => {
     if (fullUpdatedTrip.rows.length === 0) {
       return res
         .status(500)
-        .json({ message: "Failed to retrieve updated tip data." });
+        .json({ message: "Failed to retrieve updated trip data." });
     }
 
     res.status(200).json({
