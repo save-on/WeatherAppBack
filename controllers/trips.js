@@ -124,32 +124,36 @@ const getTrips = async (req, res, next) => {
 };
 
 const getTripById = async (req, res, next) => {
-    try {
-        const {tripId} = req.params;
-        const userId = req.user._id;
+    console.log("-> Entering getTripById controller."); 
+  console.log("-> getTripById received req.params:", req.params); 
+  console.log("-> getTripById received req.user:", req.user);
 
-        if(!tripId) {
-            return next(new BadRequestError("Trip ID is requried."));
-        }
+  try {
+    const { tripId } = req.params;
+    const userId = req.user._id;
 
-        const result = await pool.query(
-            `SELECT id, destination, trip_date, packing_list_id, user_id, created_at, updated_at 
+    if (!tripId) {
+      return next(new BadRequestError("Trip ID is requried."));
+    }
+
+    const result = await pool.query(
+      `SELECT id, destination, trip_date, packing_list_id, user_id, created_at, updated_at 
             FROM trips 
             WHERE id = $1 AND user_id = $2;`,
-            [trip_id, userId]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: "Trip not found."});
-        }
-        res.status(200).json(result.rows[0]);
-    } catch (error) {
-        console.error("Error fetching trip by ID: ", error);
-        next(error);
+      [tripId, userId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Trip not found." });
     }
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error fetching trip by ID: ", error);
+    next(error);
+  }
 };
 
 module.exports = {
-  createTripWithPackingList, 
+  createTripWithPackingList,
   getTrips,
-  getTripById
+  getTripById,
 };
