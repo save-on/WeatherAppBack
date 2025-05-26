@@ -77,3 +77,6 @@ CREATE TABLE trip_activities (
 	FOREIGN KEY (trip_id) REFERENCES trips (id) ON DELETE CASCADE,
 	FOREIGN KEY (activity_id) REFERENCES activities (id) ON DELETE CASCADE
 );
+
+-- CREATE category types
+CREATE TYPE categories AS ENUM ('clothes', 'footwear', 'accessories', 'personal_items');

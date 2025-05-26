@@ -164,9 +164,10 @@ const getTripById = async (req, res, next) => {
     const userId = req.user._id;
 
     if (!tripId) {
-      return next(new BadRequestError("Trip ID is requried."));
+      return next(new BadRequestError("Trip ID is required."));
     }
 
+    //1. fetch trip details and activities
     const result = await pool.query(
       `SELECT
           t.id,
@@ -192,7 +193,57 @@ const getTripById = async (req, res, next) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ message: "Trip not found." });
     }
-    res.status(200).json(result.rows[0]);
+
+    const trip = result.rows[0];
+    const packingListId = trip.packing_list_id;
+
+    //Initialize packing list structure for frontend
+    let packingListItems = {
+      clothes: [],
+      footwear: [],
+      accessories: [],
+      personal_items: [],
+    };
+
+    //2. if packing list exists fetch its items
+    if (packingListId) {
+      const itemsResult = await pool.query(
+        `SELECT
+            name,
+            quantity,
+            is_checked,
+            category
+         FROM
+            packing_list_items
+         WHERE
+            packing_list_id = $1
+         ORDER BY id;`, // Optional: add an order by clause if you want consistent order
+        [packingListId]
+      );
+
+      //3. process items and group by category
+      itemsResult.rows.forEach((item) => {
+        if (packingListItems.hasOwnProperty(item.category)) {
+          packingListItems[item.category].push({
+            name: item.name,
+            quantity: item.quantity,
+            isChecked: item.is_checked,
+            isEmpty: false,
+          });
+        } else {
+          console.warn(
+            `Unrecognized packing list item category: ${item.category} for item ${item.name}`
+          );
+        }
+      });
+    }
+
+    //4. Combine trip data and packing list
+    const fullTripData = {
+      ...trip,
+      packingList: packingListItems,
+    };
+    res.status(200).json({ trip: fullTripData });
   } catch (error) {
     console.error("Error fetching trip by ID: ", error);
     next(error);
@@ -321,7 +372,7 @@ const updateTrip = async (req, res, next) => {
       `SELECT packing_list_id FROM trips WHERE id = $1 AND user_id = $2;`,
       [tripId, userId]
     );
-    if (tripCheckResult.rows.lenghth === 0) {
+    if (tripCheckResult.rows.length === 0) {
       await client.query("ROLLBACK");
       return next(
         new NotFoundError("Trip not found or does not belong to user.")
@@ -358,7 +409,7 @@ const updateTrip = async (req, res, next) => {
       }
     }
 
-    updateTripQuery += ` WHERE id = $${paramIndex} AND user_id = ${
+    updateTripQuery += ` WHERE id = $${paramIndex} AND user_id = $${
       paramIndex + 1
     } RETURNING *;`;
     updateTripParams.push(tripId, userId);
@@ -376,7 +427,7 @@ const updateTrip = async (req, res, next) => {
     ]);
     console.log("--> Deleted existing trip_activities for trip ID: ", tripId);
 
-    if (activities && activities.length === 0) {
+    if (activities && activities.length > 0) {
       for (const activityName of activities) {
         let activityId;
         const existingActivity = await client.query(
@@ -425,7 +476,7 @@ const updateTrip = async (req, res, next) => {
           packingList[category].length > 0
         ) {
           for (const item of packingList[category]) {
-            // Note: packing_lists_items schema has activity_id INT NULL,
+            // Note: packing_list_items schema has activity_id INT NULL,
             // but for general packing items, it will be NULL.
             // Adjust if you store specific activity-related items here.
             await client.query(

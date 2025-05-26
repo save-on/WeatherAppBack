@@ -235,8 +235,14 @@ const removeItemFromPackingList = async (req, res, next) => {
 const sendPackingListEmail = async (req, res) => {
   console.log("Received request to send packing list email.");
 
-  const { clothes, footwear, accessories, personal, tripName, tripDates } =
-    req.body;
+  const {
+    clothes,
+    footwear,
+    accessories,
+    personal_items,
+    tripName,
+    tripDates,
+  } = req.body;
 
   const userId = req.user._id;
 
@@ -244,15 +250,13 @@ const sendPackingListEmail = async (req, res) => {
     clothes: clothes || [],
     footwear: footwear || [],
     accessories: accessories || [],
-    personal: personal || [],
+    personal_items: personal_items || [],
   };
 
   if (!clothes && !footwear && !accessories && !personal) {
-    return res
-      .status(400)
-      .send({
-        message: "Packing list content (clothes, footwear, etc.) is required.",
-      });
+    return res.status(400).send({
+      message: "Packing list content (clothes, footwear, etc.) is required.",
+    });
   }
 
   try {
@@ -277,52 +281,68 @@ const sendPackingListEmail = async (req, res) => {
             ${tripDates ? `<p>Dates: ${tripDates}</p>` : ""}
             <p>Here's your organized packing list:</p>
         `;
-        
-        // Add Clothes
+
+    // Add Clothes
     if (packingList.clothes && packingList.clothes.length > 0) {
-      const filteredClothes = packingList.clothes.filter(item => !item.isEmpty && item.quantity > 0);
+      const filteredClothes = packingList.clothes.filter(
+        (item) => !item.isEmpty && item.quantity > 0
+      );
       if (filteredClothes.length > 0) {
-        emailContent += '<h2>Clothes</h2><ul>';
-        filteredClothes.forEach(item => {
-          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${item.isChecked ? '(Packed)' : '(Not Packed)'}</li>`;
+        emailContent += "<h2>Clothes</h2><ul>";
+        filteredClothes.forEach((item) => {
+          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${
+            item.isChecked ? "(Packed)" : "(Not Packed)"
+          }</li>`;
         });
-        emailContent += '</ul>';
+        emailContent += "</ul>";
       }
     }
 
     // Add Footwear
     if (packingList.footwear && packingList.footwear.length > 0) {
-      const filteredFootwear = packingList.footwear.filter(item => !item.isEmpty && item.quantity > 0);
+      const filteredFootwear = packingList.footwear.filter(
+        (item) => !item.isEmpty && item.quantity > 0
+      );
       if (filteredFootwear.length > 0) {
-        emailContent += '<h2>Footwear</h2><ul>';
-        filteredFootwear.forEach(item => {
-          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${item.isChecked ? '(Packed)' : '(Not Packed)'}</li>`;
+        emailContent += "<h2>Footwear</h2><ul>";
+        filteredFootwear.forEach((item) => {
+          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${
+            item.isChecked ? "(Packed)" : "(Not Packed)"
+          }</li>`;
         });
-        emailContent += '</ul>';
+        emailContent += "</ul>";
       }
     }
 
     // Add Accessories
     if (packingList.accessories && packingList.accessories.length > 0) {
-      const filteredAccessories = packingList.accessories.filter(item => !item.isEmpty && item.quantity > 0);
+      const filteredAccessories = packingList.accessories.filter(
+        (item) => !item.isEmpty && item.quantity > 0
+      );
       if (filteredAccessories.length > 0) {
-        emailContent += '<h2>Accessories</h2><ul>';
-        filteredAccessories.forEach(item => {
-          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${item.isChecked ? '(Packed)' : '(Not Packed)'}</li>`;
+        emailContent += "<h2>Accessories</h2><ul>";
+        filteredAccessories.forEach((item) => {
+          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${
+            item.isChecked ? "(Packed)" : "(Not Packed)"
+          }</li>`;
         });
-        emailContent += '</ul>';
+        emailContent += "</ul>";
       }
     }
 
     // Add Personal Items
-    if (packingList.personal && packingList.personal.length > 0) {
-      const filteredPersonal = packingList.personal.filter(item => !item.isEmpty && item.quantity > 0);
+    if (packingList.personal_items && packingList.personal_items.length > 0) {
+      const filteredPersonal = packingList.personal_items.filter(
+        (item) => !item.isEmpty && item.quantity > 0
+      );
       if (filteredPersonal.length > 0) {
-        emailContent += '<h2>Personal Items</h2><ul>';
-        filteredPersonal.forEach(item => {
-          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${item.isChecked ? '(Packed)' : '(Not Packed)'}</li>`;
+        emailContent += "<h2>Personal Items</h2><ul>";
+        filteredPersonal.forEach((item) => {
+          emailContent += `<li>${item.name} (Quantity: ${item.quantity}) ${
+            item.isChecked ? "(Packed)" : "(Not Packed)"
+          }</li>`;
         });
-        emailContent += '</ul>';
+        emailContent += "</ul>";
       }
     }
 
@@ -337,9 +357,10 @@ const sendPackingListEmail = async (req, res) => {
       packingList.accessories.filter(
         (item) => !item.isEmpty && item.quantity > 0
       ).length === 0 &&
-      packingList.personal &&
-      packingList.personal.filter((item) => !item.isEmpty && item.quantity > 0)
-        .length === 0
+      packingList.personal_items &&
+      packingList.personal_items.filter(
+        (item) => !item.isEmpty && item.quantity > 0
+      ).length === 0
     ) {
       emailContent +=
         "<p>Your packing list is currently empty. Start adding items to prepare for your trip!</p>";
@@ -367,12 +388,10 @@ const sendPackingListEmail = async (req, res) => {
     res.status(200).send({ message: "Packing list sent to your email!" });
   } catch (error) {
     console.error("Error sending packing list email:", error);
-    res
-      .status(500)
-      .send({
-        message: "Failed to send packing list email.",
-        error: error.message,
-      });
+    res.status(500).send({
+      message: "Failed to send packing list email.",
+      error: error.message,
+    });
   }
 };
 
