@@ -1,5 +1,7 @@
 const pool = require("../db");
 const BadRequestError = require("../utils/errorclasses/BadRequestError");
+const UnauthorizedError = require("../utils/errorclasses/UnauthorizedError");
+const NotFoundError = require("../utils/errorclasses/NotFoundError");
 
 const createTripWithPackingList = async (req, res, next) => {
   console.log("Reached createTripWithPackingList controller.");
@@ -124,8 +126,8 @@ const getTrips = async (req, res, next) => {
 };
 
 const getTripById = async (req, res, next) => {
-    console.log("-> Entering getTripById controller."); 
-  console.log("-> getTripById received req.params:", req.params); 
+  console.log("-> Entering getTripById controller.");
+  console.log("-> getTripById received req.params:", req.params);
   console.log("-> getTripById received req.user:", req.user);
 
   try {
@@ -152,8 +154,85 @@ const getTripById = async (req, res, next) => {
   }
 };
 
+const deleteTripById = async (req, res, next) => {
+  console.log("-> Entering deleteTripById controller.");
+  console.log("-> deleteTripById received req.params:", req.params);
+  console.log("-> deleteTripById received req.user:", req.user);
+
+  const client = await pool.query.connect();
+  try {
+    const { tripId } = req.params;
+    const userId = req.user._id;
+
+    if (!tripId) {
+      return next(new BadRequestError("Trip ID is required for deletion."));
+    }
+    if (!userId) {
+      return next(new UnauthorizedError("User not authenticated."));
+    }
+
+    await client.query("BEGIN");
+
+    //1. Get the packing_list_id from the trip
+    const tripResult = await client.query(
+      `SELECT packing_list_id FROM trips WHERE id = $1 AND user_id = $2;`,
+      [tripId, userId]
+    );
+
+    if (tripResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return next(
+        new NotFoundError(
+          "Trip not found or you don't have permission to delete it."
+        )
+      );
+    }
+    const packingListId = tripResult.rows[0].packing_list_id;
+
+    //2. Delete related activities
+    await client.query(`DELETE FROM activities WHERE packing_list_id = $1;`, [
+      packingListId,
+    ]);
+    console.log(`Deleted activities from packing list ID: ${packingListId}`);
+
+    //3. Delete packing list
+    await client.query(`DELETE FROM packing_lists WHERE id = $1;`, [
+      packingListId,
+    ]);
+    console.log(`Deleted packing list ID: ${packingListId}`);
+
+    //4. Delete the trip itself
+    const deleteTripResult = await client.query(
+      `DELETE FROM trips WHERE id = $1 AND user_id = $2 RETURNING id;`,
+      [tripId, userId]
+    );
+    console.log(`Delted trip ID: ${tripId}`);
+
+    if (deleteTripResult.rows.length == 0) {
+      await client.query("ROLLBACK");
+      return next(
+        new NotFoundError(
+          "Trip not found or you don't have permission to delete it."
+        )
+      );
+    }
+    await client.query("COMMIT");
+    console.log(`Transaction COMMITTED for deleting trip ${tripId}`);
+    res
+      .status(200)
+      .json({ message: "Trip and associated data deleted successfully." });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error deleting trip by ID: ", error);
+    next(error);
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   createTripWithPackingList,
   getTrips,
   getTripById,
+  deleteTripById,
 };
